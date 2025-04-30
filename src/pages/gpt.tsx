@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   initializeApp 
 } from 'firebase/app';
@@ -165,46 +166,56 @@ const SignupPage = () => {
   };
 
   // Verify OTP and complete signup
-  const verifyOTP = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-   console.error("ankush is here ");
-    try {
-      if (!otp || otp.length !== 6) {
-        throw new Error("Please enter a valid 6-digit OTP");
-      }
+  // …inside your SignupPage component…
 
-      const credential = PhoneAuthProvider.credential(verificationId, otp);
-      console.log('after the phone auth ')
-      // Use the imported signInWithCredential function, not as a method of auth
-      const userCredential = await signInWithCredential(auth, credential);
-      console.log("after signin with credentiail");
-      const user = userCredential.user;
-      
-      // Create user document in Firestore
-      if (!user.uid) throw new Error("User ID not available");
-      
-      // Store user data in Firestore
-      console.log("before the set doc");
-      await setDoc(doc(db, "users", user.uid), {
-        name: formData.name,
-        username: formData.username,
-        phoneNumber: formData.phoneNumber,
-        createdAt: new Date(),
-        // Note: In a real app, don't store passwords in Firestore. 
-        // Firebase Auth handles authentication.
-      });
-      console.log("after the set sucess") ;
-      
-      setSuccess(true);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error verifying OTP:", err);
-      setError(`Failed to verify OTP: ${err.message || 'Unknown error'}`);
-      setLoading(false);
+const verifyOTP = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+
+  try {
+    if (!otp || otp.length !== 6) {
+      throw new Error("Please enter a valid 6-digit OTP");
     }
-  };
+
+    // 1) Create the Firebase credential & sign in
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
+    const userCredential = await signInWithCredential(auth, credential);
+    const user = userCredential.user;
+
+    // 2) Pull a fresh ID token to prove ownership of this phone number
+    const idToken = await user.getIdToken(/* forceRefresh */ true);
+
+    // 3) Prepare your payload using the same formData you collected
+    const { name, username, phoneNumber, password } = formData;
+    const payload = { name, username, phoneNumber, password };
+
+    // 4) Send to your own backend, including the Firebase ID token in the header
+    const response = await axios.post(
+      'http://localhost:3000/user/signup',
+      payload,
+      {
+        headers: {
+          // your server will do admin.auth().verifyIdToken(idToken) under the hood
+          Authorization: `Bearer ${idToken}`
+        }
+      }
+    );
+
+    // 5) On success, flip your UI to the “signed up” state
+    if (response.status === 200) {
+      setSuccess(true);
+    } else {
+      throw new Error(response.data?.message || 'Signup failed');
+    }
+  } catch (err) {
+    console.error("Error verifying OTP or signing up:", err);
+    setError(`Signup error: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (success) {
     return (
@@ -235,13 +246,13 @@ const SignupPage = () => {
             {/* Company Logo Upload */}
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2">
-                Company Logo
+
               </label>
               <div className="flex items-center justify-center w-full">
                 {logoPreview ? (
                   <div className="relative w-32 h-32 mb-2">
                     <img 
-                      src={logoPreview} 
+                      src={"./nearbux.png"} 
                       alt="Company logo preview" 
                       className="w-32 h-32 object-contain border-2 border-gray-300 rounded-md"
                     />
