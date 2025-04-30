@@ -233,8 +233,7 @@ const verifyOTP = async (e) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Create an Account</h2>
-        
+       
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
@@ -253,6 +252,8 @@ const verifyOTP = async (e) => {
                  
                 
               </div>
+              <h2 className="text-2xl font-bold text-center text-gray-800 mt-4 mb-3">Create an Account</h2>
+        
             </div>
             
             <div className="mb-4">
