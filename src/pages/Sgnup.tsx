@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router";
+ 
+
 import axios from 'axios';
 import { 
   initializeApp 
@@ -16,7 +19,9 @@ import {
   setDoc 
 } from 'firebase/firestore';
 
-// Firebase configuration
+
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyBJH-vZGOEu2Kpi_Rw6RGZSTR_nsP_0VSU",
   authDomain: "nearbux-ae614.firebaseapp.com",
@@ -26,12 +31,12 @@ const firebaseConfig = {
   appId: "1:852185715667:web:616be6d84d10fd5a861526"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Define types for TypeScript
+
 interface FormData {
   name: string;
   username: string;
@@ -41,6 +46,7 @@ interface FormData {
 }
 
 const SignupPage = () => {
+   let navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -90,7 +96,7 @@ const SignupPage = () => {
     }));
   };
 
-  // Handle company logo upload
+ 
   const handleLogoChange = (e) => {
     if (e.target.files[0]) {
       const file = e.target.files[0];
@@ -99,7 +105,7 @@ const SignupPage = () => {
         companyLogo: file
       }));
       
-      // Create a preview
+     
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
@@ -108,19 +114,18 @@ const SignupPage = () => {
     }
   };
 
-  // Handle OTP input changes
+  
   const handleOtpChange = (e) => {
     // Only allow digits
     const value = e.target.value.replace(/\D/g, '').substring(0, 6);
     setOtp(value);
   };
 
-  // Format phone number to E.164 format
   const formatPhoneNumber = (phoneNumber) => {
-    // Remove any non-digit characters
+
     const cleaned = phoneNumber.replace(/\D/g, '');
     
-    // Add '+' prefix if not present
+   
     if (!cleaned.startsWith('+')) {
       return `+${cleaned}`;
     }
@@ -134,12 +139,12 @@ const SignupPage = () => {
     setError(null);
 
     try {
-      // Validate required fields
+     
       if (!formData.name || !formData.username || !formData.phoneNumber || !formData.password) {
         throw new Error("All fields are required");
       }
       
-      // Format phone number to E.164 format
+     
       const formattedPhoneNumber = formatPhoneNumber(formData.phoneNumber);
       
       const appVerifier = window.recaptchaVerifier;
@@ -165,8 +170,7 @@ const SignupPage = () => {
     }
   };
 
-  // Verify OTP and complete signup
-  // …inside your SignupPage component…
+  
 
 const verifyOTP = async (e) => {
   e.preventDefault();
@@ -178,33 +182,46 @@ const verifyOTP = async (e) => {
       throw new Error("Please enter a valid 6-digit OTP");
     }
 
-    // 1) Create the Firebase credential & sign in
+    
     const credential = PhoneAuthProvider.credential(verificationId, otp);
     const userCredential = await signInWithCredential(auth, credential);
     const user = userCredential.user;
 
-    // 2) Pull a fresh ID token to prove ownership of this phone number
+    //
     const idToken = await user.getIdToken(/* forceRefresh */ true);
 
-    // 3) Prepare your payload using the same formData you collected
+    
     const { name, username, phoneNumber, password } = formData;
     const payload = { name, username, phoneNumber, password };
 
-    // 4) Send to your own backend, including the Firebase ID token in the header
+    
     const response = await axios.post(
       'http://localhost:3000/user/signup',
       payload,
       {
         headers: {
-          // your server will do admin.auth().verifyIdToken(idToken) under the hood
+        
           Authorization: `Bearer ${idToken}`
         }
       }
     );
 
-    // 5) On success, flip your UI to the “signed up” state
+    // 
     if (response.status === 200) {
+      let bu = 0; 
+      localStorage.setItem("phone" , phoneNumber);
       setSuccess(true);
+       new Promise((res, rej)=>{
+
+        bu = 1; 
+        setTimeout(res, 5000)
+      });
+      if(bu==1){
+        navigate("/info");
+      }
+       
+
+
     } else {
       throw new Error(response.data?.message || 'Signup failed');
     }
@@ -352,7 +369,7 @@ const verifyOTP = async (e) => {
                 type="button"
                 onClick={verifyOTP}
                 disabled={loading}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                className="bg-blue-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
               >
                 {loading ? 'Verifying...' : 'Verify & Signup'}
               </button>
