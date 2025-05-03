@@ -23,8 +23,8 @@ export default  function Info() {
     const phoneNumber = localStorage.getItem("phone");
     const response =  await  axios.post("http://localhost:3000/user/info", {pinCode , area , phoneNumber});
     if(response.status ===200){
-      navigate("/jljlj");
-
+     navigate("/signin");
+   
 
     }
   };
@@ -75,7 +75,7 @@ export default  function Info() {
         <button
           type="submit"
           
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer transition"
         >
           Submit
         </button>

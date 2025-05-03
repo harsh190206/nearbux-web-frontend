@@ -119,10 +119,64 @@ const SignupPage = () => {
   };
 
   // Send OTP
+
+  const validateInputs = async (): Promise<boolean> => {
+    const { name, username, phoneNumber, password } = formData;
+  
+    if (!name || !username || !phoneNumber || !password) {
+      setError("All fields are required");
+      return false;
+    }
+  
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return false;
+    }
+
+    if (username.length > 8) {
+      setError("username should be within 8 characters ");
+      return false;
+    }
+  
+    const phonePattern = /^\+\d{10,15}$/;
+    if (!phonePattern.test(formatPhoneNumber(phoneNumber))) {
+      setError("Please enter a valid phone number with country code (e.g., +1234567890)");
+      return false;
+    }
+  
+    try {
+      const res = await axios.post('http://localhost:3000/user/validate', {
+        username,
+        phoneNumber: formatPhoneNumber(phoneNumber)
+      });
+  
+      if (res.data?.usernameExists) {
+        setError("Username already taken");
+        return false;
+      }
+  
+      if (res.data?.phoneExists) {
+        setError("Phone number already registered");
+        return false;
+      }
+  
+      return true;
+    } catch (err) {
+      setError("Server error during validation");
+      return false;
+    }
+  };
+  
   const sendOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    const isValid = await validateInputs();
+    if (!isValid) {
+      setLoading(false);
+      return;
+    }
 
     try {
      
