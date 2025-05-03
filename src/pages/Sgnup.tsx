@@ -59,12 +59,13 @@ const SignupPage = () => {
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [logoPreview, setLogoPreview] = useState(null);
+
   
   // Setup reCAPTCHA verifier
   useEffect(() => {
+    //@ts-ignore
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       'size': 'normal',
       'callback': () => {
@@ -72,6 +73,7 @@ const SignupPage = () => {
       },
       'expired-callback': () => {
         // Response expired. Ask user to solve reCAPTCHA again.
+        // @ts-ignore
         setError('reCAPTCHA expired. Please refresh the page.');
       }
     });
@@ -97,31 +99,15 @@ const SignupPage = () => {
   };
 
  
-  const handleLogoChange = (e) => {
-    if (e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData((prev) => ({
-        ...prev,
-        companyLogo: file
-      }));
-      
-     
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   
-  const handleOtpChange = (e) => {
+  
+  const handleOtpChange = (e : any) => {
     // Only allow digits
     const value = e.target.value.replace(/\D/g, '').substring(0, 6);
     setOtp(value);
   };
 
-  const formatPhoneNumber = (phoneNumber) => {
+  const formatPhoneNumber = (phoneNumber : any) => {
 
     const cleaned = phoneNumber.replace(/\D/g, '');
     
@@ -225,10 +211,21 @@ const verifyOTP = async (e) => {
     } else {
       throw new Error(response.data?.message || 'Signup failed');
     }
-  } catch (err) {
+  }catch (err : any ) {
     console.error("Error verifying OTP or signing up:", err);
-    setError(`Signup error: ${err.message}`);
-  } finally {
+    let message = "Signup error occurred";
+    
+    
+    if (err.response && err.response.data && err.response.data.message) {
+      message = err.response.data.message;
+    } else if (err.response && err.response.data && err.response.data.error) {
+     
+      message = err.response.data.error[0]?.message || message;
+    }
+  
+    setError(`Signup error: ${message}`);
+  }
+   finally {
     setLoading(false);
   }
 };
