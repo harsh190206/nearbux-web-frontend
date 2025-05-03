@@ -107,16 +107,11 @@ const SignupPage = () => {
     setOtp(value);
   };
 
-  const formatPhoneNumber = (phoneNumber : any) => {
-
-    const cleaned = phoneNumber.replace(/\D/g, '');
-    
-   
-    if (!cleaned.startsWith('+')) {
-      return `+${cleaned}`;
-    }
-    return cleaned;
+  const formatPhoneNumber = (phoneNumber: string) => {
+    const cleaned = phoneNumber.replace(/\D/g, '').substring(0, 10);
+    return `+91${cleaned}`;
   };
+  
 
   // Send OTP
 
@@ -133,12 +128,14 @@ const SignupPage = () => {
       return false;
     }
 
-    if (username.length > 8) {
-      setError("username should be within 8 characters ");
+    if (username.length > 9) {
+      setError("username should be within 9 characters ");
       return false;
     }
   
-    const phonePattern = /^\+\d{10,15}$/;
+    const phonePattern = /^\+91\d{10}$/;
+
+
     if (!phonePattern.test(formatPhoneNumber(phoneNumber))) {
       setError("Please enter a valid phone number with country code (e.g., +1234567890)");
       return false;
@@ -231,8 +228,9 @@ const verifyOTP = async (e) => {
     const idToken = await user.getIdToken(/* forceRefresh */ true);
 
     
-    const { name, username, phoneNumber, password } = formData;
-    const payload = { name, username, phoneNumber, password };
+    let { name, username, phoneNumber, password } = formData;
+    
+    const payload = { name, username,phoneNumber :  formatPhoneNumber(phoneNumber) , password };
 
     
     const response = await axios.post(
@@ -249,7 +247,8 @@ const verifyOTP = async (e) => {
     // 
     if (response.status === 200) {
       let bu = 0; 
-      localStorage.setItem("phone" , phoneNumber);
+      
+      localStorage.setItem("phone" ,formatPhoneNumber(phoneNumber));
       setSuccess(true);
        new Promise((res, rej)=>{
 
@@ -299,7 +298,7 @@ const verifyOTP = async (e) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-10 px-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
        
         {error && (
@@ -356,14 +355,15 @@ const verifyOTP = async (e) => {
             
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
-                Phone Number (with country code)
+                Phone Number 
               </label>
               <input
                 id="phoneNumber"
                 name="phoneNumber"
                 type="tel"
+                maxLength={10}
                 required
-                placeholder="+1234567890"
+                placeholder="enter 10 digit number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -395,8 +395,13 @@ const verifyOTP = async (e) => {
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
               >
                 {loading ? 'Sending OTP...' : 'Get OTP'}
+
               </button>
+              
             </div>
+            <p className="text-center text-sm mt-4">
+             already have  an account? <a href='/signin' className="text-blue-600  cursor-pointer"> Sign in </a>
+            </p>
           </div>
         ) : (
           <div>

@@ -31,7 +31,7 @@ export function Signin (){
     e.preventDefault();
     setloading(true);
         
-    const userInput = input; 
+    let userInput = input; 
     const password = inputref.current?.value;
 
       const  ver = await validate();
@@ -41,11 +41,19 @@ export function Signin (){
       }
 
      try {
+      if(userInput.length===10){
+        userInput = '+91' + userInput;
+      } 
+
     const response =  await axios.post("http://localhost:3000/user/signin", {userInput, password});
     if(response.status === 500){
 
       throw new Error (response.data.message);
 
+    }
+    if(response.data.token){
+      localStorage.setItem("token", response.data.token);
+      console.log(response.data.token);
     }
 
      }catch (e : any ){
@@ -93,7 +101,7 @@ export function Signin (){
           <form  onSubmit={sig} className="space-y-4">
             <div>
               <p className="text-sm mb-1">username or Phone</p>
-              <input onChange={handleInputChange} type="text" className="border rounded-md w-full px-3 py-2" />
+              <input maxLength={10} onChange={handleInputChange} type="text" className="border rounded-md w-full px-3 py-2" />
             </div>
 
           
