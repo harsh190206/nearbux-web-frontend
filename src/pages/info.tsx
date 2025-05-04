@@ -7,25 +7,44 @@ export default  function Info() {
   const [area, setArea] = useState('');
   const [pinCode, setPinCode] = useState('');
   const [error, setError] = useState('');
+  const [loading , setloading] = useState<boolean>(false);
 
    async function handleSubmit  (e : any)  {
+    setloading((e)=>!e);
     e.preventDefault();
     // Basic validation
     if (!area.trim()) {
       setError('Please enter your area name.');
+      setloading(false);
       return;
     }
     if (!/^\d{6}$/.test(pinCode)) {
       setError('Please enter a valid 6-digit pin code.');
+      setloading(false);
       return;
     }
     setError('');
     const phoneNumber = localStorage.getItem("phone");
-    const response =  await  axios.post("http://localhost:3000/user/info", {pinCode , area , phoneNumber});
-    if(response.status ===200){
+    let response ;
+    try {
+     response =  await  axios.post("http://localhost:3000/user/info", {pinCode , area , phoneNumber});
+   
+    }catch(errr : any ){
+      setloading(false);
+      setError('network error nd');
+
+
+    }
+
+     if(response?.status ===200){
      navigate("/signin");
+     setloading(false);
    
 
+    }
+    else {
+      setloading(false);
+      setError(response.data.message);
     }
   };
 
@@ -53,7 +72,7 @@ export default  function Info() {
             value={area}
             onChange={(e) => setArea(e.target.value)}
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="e.g., Downtown"
+            placeholder="e.g., jaipur"
           />
         </div>
 
@@ -75,9 +94,9 @@ export default  function Info() {
         <button
           type="submit"
           
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer transition"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-800 cursor-pointer transition"
         >
-          Submit
+          {loading ? "submitting ..." : "submit"}
         </button>
       </form>
     </div>

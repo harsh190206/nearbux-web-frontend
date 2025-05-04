@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -39,29 +39,64 @@ const Forgotpass = () => {
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(1); // 1: Phone, 2: OTP, 3: New Password, 4: Success
   const [success, setSuccess] = useState(false);
+  
+  // Reference for reCAPTCHA verifier
+  const recaptchaVerifierRef = useRef(null);
+  const recaptchaContainerRef = useRef(null);
 
   // Setup reCAPTCHA verifier
   useEffect(() => {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'normal',
-      'callback': () => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-      },
-      'expired-callback': () => {
-        setError('reCAPTCHA expired. Please refresh the page.');
+    // Only initialize reCAPTCHA if we're on step 1
+    if (currentStep === 1) {
+      // Clear any existing reCAPTCHA
+      clearRecaptcha();
+      
+      // Create a new container if needed
+      if (!recaptchaContainerRef.current) {
+        recaptchaContainerRef.current = document.getElementById('recaptcha-container');
       }
-    });
-
-    return () => {
+      
+      // Create new reCAPTCHA
       try {
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-        }
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'normal',
+          'callback': () => {
+            // reCAPTCHA solved
+            console.log("reCAPTCHA verified successfully");
+          },
+          'expired-callback': () => {
+            setError('reCAPTCHA expired. Please refresh and try again.');
+          }
+        });
+        
+        // Render the reCAPTCHA
+        recaptchaVerifierRef.current.render().catch(error => {
+          console.error("Error rendering reCAPTCHA:", error);
+          setError("Failed to load reCAPTCHA. Please refresh the page.");
+        });
       } catch (err) {
-        console.error("Error clearing reCAPTCHA:", err);
+        console.error("Error initializing reCAPTCHA:", err);
+        setError("Failed to initialize verification. Please refresh the page.");
       }
+    }
+    
+    // Cleanup function
+    return () => {
+      clearRecaptcha();
     };
-  }, []);
+  }, [currentStep]);
+
+  // Function to safely clear reCAPTCHA
+  const clearRecaptcha = () => {
+    try {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    } catch (err) {
+      console.error("Error clearing reCAPTCHA:", err);
+    }
+  };
 
   // Format phone number
   const formatPhoneNumber = (phoneNumber) => {
@@ -104,27 +139,23 @@ const Forgotpass = () => {
     }
 
     try {
+      if (!recaptchaVerifierRef.current) {
+        throw new Error("reCAPTCHA not initialized. Please refresh the page.");
+      }
+      
       const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
-      const appVerifier = window.recaptchaVerifier;
+      const appVerifier = recaptchaVerifierRef.current;
       
       const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, appVerifier);
       setVerificationId(confirmationResult.verificationId);
       setCurrentStep(2);
-      setLoading(false);
     } catch (err) {
       console.error("Error sending OTP:", err);
       setError(`Failed to send OTP: ${err.message || 'Unknown error'}`);
-      setLoading(false);
       
-      // Reset reCAPTCHA
-      try {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'normal'
-        });
-      } catch (clearErr) {
-        console.error("Error clearing reCAPTCHA:", clearErr);
-      }
+      // Don't try to recreate reCAPTCHA here - we'll handle that in the useEffect
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -140,13 +171,13 @@ const Forgotpass = () => {
       }
 
       const credential = PhoneAuthProvider.credential(verificationId, otp);
-      const userCredential = await signInWithCredential(auth, credential);
+      await signInWithCredential(auth, credential);
       
       // Successfully verified, move to password update step
       setCurrentStep(3);
     } catch (err) {
       console.error("Error verifying OTP:", err);
-      setError(`Verification failed: ${err.message || 'Unknown error'}`);
+      setError(`Verification failed: ${err.message || 'Invalid OTP'}`);
     } finally {
       setLoading(false);
     }
@@ -219,20 +250,11 @@ const Forgotpass = () => {
 
   // Reset to phone step
   const resetToPhoneStep = () => {
+    // Set step first so the useEffect will handle reCAPTCHA recreation
     setCurrentStep(1);
     setOtp('');
     setVerificationId('');
     setError(null);
-    
-    // Reset reCAPTCHA
-    try {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'normal'
-      });
-    } catch (clearErr) {
-      console.error("Error clearing reCAPTCHA:", clearErr);
-    }
   };
 
   // Success view
@@ -391,7 +413,7 @@ const Forgotpass = () => {
             <button
               onClick={updatePassword}
               disabled={loading}
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-300"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-300"
             >
               {loading ? 'Updating...' : 'Update Password'}
             </button>

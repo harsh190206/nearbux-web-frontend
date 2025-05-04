@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router";
- 
-
 import axios from 'axios';
 import { 
   initializeApp 
@@ -19,9 +17,6 @@ import {
   setDoc 
 } from 'firebase/firestore';
 
-
-
-
 const firebaseConfig = {
   apiKey: "AIzaSyBJH-vZGOEu2Kpi_Rw6RGZSTR_nsP_0VSU",
   authDomain: "nearbux-ae614.firebaseapp.com",
@@ -31,11 +26,10 @@ const firebaseConfig = {
   appId: "1:852185715667:web:616be6d84d10fd5a861526"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig); 
 
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 
 interface FormData {
   name: string;
@@ -46,7 +40,7 @@ interface FormData {
 }
 
 const SignupPage = () => {
-   let navigate = useNavigate();
+  let navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -61,33 +55,62 @@ const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
+  const recaptchaVerifierRef = useRef<any>(null);
   
-  // Setup reCAPTCHA verifier
+  // Setup reCAPTCHA verifier when component mounts or when returning to phone input view
   useEffect(() => {
-    //@ts-ignore
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'normal',
-      'callback': () => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-      },
-      'expired-callback': () => {
-        // Response expired. Ask user to solve reCAPTCHA again.
-        // @ts-ignore
-        setError('reCAPTCHA expired. Please refresh the page.');
-      }
-    });
+    if (!otpSent) {
+      initializeRecaptcha();
+    }
     
     return () => {
-      try {
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-        }
-      } catch (err) {
-        console.error("Error clearing reCAPTCHA:", err);
-      }
+      clearRecaptcha();
     };
-  }, []);
+  }, [otpSent]);
+
+  const initializeRecaptcha = () => {
+    // Clear any existing recaptcha first
+    clearRecaptcha();
+    
+    // Create a new instance
+    setTimeout(() => {
+      try {
+        // @ts-ignore
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'normal',
+          'callback': () => {
+            // reCAPTCHA solved
+            setError(null);
+          },
+          'expired-callback': () => {
+            setError('reCAPTCHA expired. Please refresh the page.');
+          }
+        });
+        
+        // Render the recaptcha
+        recaptchaVerifierRef.current.render();
+      } catch (err) {
+        console.error("Error initializing reCAPTCHA:", err);
+      }
+    }, 500); // Short delay to ensure DOM is ready
+  };
+  
+  const clearRecaptcha = () => {
+    try {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+      
+      // Also clear the container
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+    } catch (err) {
+      console.error("Error clearing reCAPTCHA:", err);
+    }
+  };
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -97,9 +120,6 @@ const SignupPage = () => {
       [name]: value,
     }));
   };
-
- 
-  
   
   const handleOtpChange = (e : any) => {
     // Only allow digits
@@ -112,9 +132,6 @@ const SignupPage = () => {
     return `+91${cleaned}`;
   };
   
-
-  // Send OTP
-
   const validateInputs = async (): Promise<boolean> => {
     const { name, username, phoneNumber, password } = formData;
   
@@ -129,12 +146,11 @@ const SignupPage = () => {
     }
 
     if (username.length > 9) {
-      setError("username should be within 9 characters ");
+      setError("username should be within 9 characters");
       return false;
     }
   
     const phonePattern = /^\+91\d{10}$/;
-
 
     if (!phonePattern.test(formatPhoneNumber(phoneNumber))) {
       setError("Please enter a valid phone number with country code (e.g., +1234567890)");
@@ -176,113 +192,104 @@ const SignupPage = () => {
     }
 
     try {
-     
       if (!formData.name || !formData.username || !formData.phoneNumber || !formData.password) {
         throw new Error("All fields are required");
       }
       
-     
       const formattedPhoneNumber = formatPhoneNumber(formData.phoneNumber);
       
-      const appVerifier = window.recaptchaVerifier;
+      if (!recaptchaVerifierRef.current) {
+        throw new Error("reCAPTCHA not initialized. Please refresh the page.");
+      }
       
-      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, appVerifier);
+      const confirmationResult = await signInWithPhoneNumber(
+        auth, 
+        formattedPhoneNumber, 
+        recaptchaVerifierRef.current
+      );
+      
       setVerificationId(confirmationResult.verificationId);
       setOtpSent(true);
-      setLoading(false);
     } catch (err) {
       console.error("Error sending OTP:", err);
       setError(`Failed to send OTP: ${err.message || 'Unknown error'}`);
-      setLoading(false);
       
-      // Reset reCAPTCHA
-      try {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'normal'
-        });
-      } catch (clearErr) {
-        console.error("Error clearing reCAPTCHA:", clearErr);
-      }
+      // Re-initialize reCAPTCHA if there was an error
+      initializeRecaptcha();
+    } finally {
+      setLoading(false);
     }
   };
 
-  
+  const verifyOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-const verifyOTP = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError(null);
-
-  try {
-    if (!otp || otp.length !== 6) {
-      throw new Error("Please enter a valid 6-digit OTP");
-    }
-
-    
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
-    const userCredential = await signInWithCredential(auth, credential);
-    const user = userCredential.user;
-
-    //
-    const idToken = await user.getIdToken(/* forceRefresh */ true);
-
-    
-    let { name, username, phoneNumber, password } = formData;
-    
-    const payload = { name, username,phoneNumber :  formatPhoneNumber(phoneNumber) , password };
-
-    
-    const response = await axios.post(
-      'http://localhost:3000/user/signup',
-      payload,
-      {
-        headers: {
-        
-          Authorization: `Bearer ${idToken}`
-        }
+    try {
+      if (!otp || otp.length !== 6) {
+        throw new Error("Please enter a valid 6-digit OTP");
       }
-    );
 
-    // 
-    if (response.status === 200) {
-      let bu = 0; 
+      const credential = PhoneAuthProvider.credential(verificationId, otp);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+
+      const idToken = await user.getIdToken(/* forceRefresh */ true);
+
+      let { name, username, phoneNumber, password } = formData;
       
-      localStorage.setItem("phone" ,formatPhoneNumber(phoneNumber));
-      setSuccess(true);
-       new Promise((res, rej)=>{
+      const payload = { 
+        name, 
+        username, 
+        phoneNumber: formatPhoneNumber(phoneNumber), 
+        password 
+      };
 
-        bu = 1; 
-        setTimeout(res, 5000)
-      });
-      if(bu==1){
-        navigate("/info");
+      const response = await axios.post(
+        'http://localhost:3000/user/signup',
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        localStorage.setItem("phone", formatPhoneNumber(phoneNumber));
+        setSuccess(true);
+        
+        // Better way to handle navigation
+        setTimeout(() => {
+          navigate("/info");
+        }, 2000);
+      } else {
+        throw new Error(response.data?.message || 'Signup failed');
       }
-       
-
-
-    } else {
-      throw new Error(response.data?.message || 'Signup failed');
-    }
-  }catch (err : any ) {
-    console.error("Error verifying OTP or signing up:", err);
-    let message = "Signup error occurred";
+    } catch (err : any) {
+      console.error("Error verifying OTP or signing up:", err);
+      let message = "Signup error occurred";
+      
+      if (err.response && err.response.data && err.response.data.message) {
+        message = err.response.data.message;
+      } else if (err.response && err.response.data && err.response.data.error) {
+        message = err.response.data.error[0]?.message || message;
+      } else if (err.message) {
+        message = err.message;
+      }
     
-    
-    if (err.response && err.response.data && err.response.data.message) {
-      message = err.response.data.message;
-    } else if (err.response && err.response.data && err.response.data.error) {
-     
-      message = err.response.data.error[0]?.message || message;
+      setError(`Signup error: ${message}`);
+    } finally {
+      setLoading(false);
     }
-  
-    setError(`Signup error: ${message}`);
-  }
-   finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const handleChangePhoneNumber = () => {
+    setOtpSent(false);
+    setError(null);
+    // No need to manually initialize recaptcha here, the useEffect will handle it
+  };
 
   if (success) {
     return (
@@ -291,56 +298,69 @@ const verifyOTP = async (e) => {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-green-600 mb-4">Signup Successful!</h2>
             <p className="text-gray-700">Thank you for registering with us.</p>
+            <p className="text-gray-500 mt-4">Redirecting you shortly...</p>
           </div>
         </div>
       </div>
     );
   }
+
   return (
     <div className="min-h-screen flex flex-row bg-blue-600">
       {/* Left section (blue background with logo and info) */}
-      <div className="w-1/2 flex flex-col items-center justify-center text-white p-10 relative overflow-hidden">
-        <div className="absolute w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 opacity-80"></div>
+      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-800">
+        {/* Decorative circles */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-400 opacity-10 animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-96 h-96 rounded-full bg-indigo-400 opacity-10 animate-pulse delay-1000"></div>
+        <div className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full bg-purple-400 opacity-10 animate-pulse delay-700"></div>
         
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="bg-blue-800 rounded-2xl p-5 mb-6 shadow-lg">
-            <img src="./nearbux.png" alt="NearBux Logo" className="w-32 h-32" />
-          </div>
-          
-          <h1 className="text-4xl font-bold mb-2">NearBux</h1>
-          <p className="text-xl mb-10">Shop Local, Save More</p>
-          
-          <div className="w-full max-w-md">
-            <div className="bg-blue-500/50 rounded-xl p-4 mb-4 flex items-center backdrop-blur-sm">
-              <div className="bg-blue-400/50 p-2 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="font-medium text-lg">Exclusive Deals</h2>
-                <p className="text-sm text-white/80">Discover local savings</p>
+        {/* Centered brand content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center z-10">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-lg rounded-3xl transform -rotate-6"></div>
+              <div className="bg-gradient-to-br from-blue-800 to-indigo-900 p-8 rounded-3xl shadow-2xl relative transform transition-all duration-500 hover:scale-105">
+                <div className="relative p-4">
+                  <div className="absolute inset-0 bg-blue-500/30 blur-xl rounded-full"></div>
+                  <img src="/nearbux.png" alt="NearBux Logo" className="w-28 h-28 mx-auto relative z-10" />
+                </div>
               </div>
             </div>
+            <h1 className="text-white text-4xl font-bold mt-8 tracking-tight">NearBux</h1>
+            <p className="text-blue-100 mt-2 font-light text-lg">Shop Local, Save More</p>
             
-            <div className="bg-blue-500/50 rounded-xl p-4 flex items-center backdrop-blur-sm">
-              <div className="bg-blue-400/50 p-2 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+            <div className="mt-12 px-10">
+              <div className="flex items-center space-x-4 text-left bg-white/10 backdrop-blur p-4 rounded-xl">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium">Exclusive Deals</p>
+                  <p className="text-blue-100 text-sm">Discover local savings</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-medium text-lg">Nearby Stores</h2>
-                <p className="text-sm text-white/80">Find what's close to you</p>
+              
+              <div className="flex items-center space-x-4 text-left bg-white/10 backdrop-blur p-4 rounded-xl mt-4">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium">Nearby Stores</p>
+                  <p className="text-blue-100 text-sm">Find what's close to you</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Right section (white card with form) */}
-      <div className="w-1/2 flex items-center justify-center p-4 bg-blue-50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 bg-blue-50">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -392,6 +412,7 @@ const verifyOTP = async (e) => {
                     required
                     value={formData.username}
                     onChange={handleChange}
+                    maxLength={9}
                     className="pl-10 shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Create a username"
                   />
@@ -437,6 +458,7 @@ const verifyOTP = async (e) => {
                     name="password"
                     type="password"
                     required
+                    maxLength={16}
                     value={formData.password}
                     onChange={handleChange}
                     className="pl-10 shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -459,7 +481,10 @@ const verifyOTP = async (e) => {
               <p className="text-center text-gray-600 mt-6">
                 Already have an account? <a href='/signin' className="text-blue-600 hover:text-blue-800 font-medium cursor-pointer"> Sign in </a>
               </p>
+               
+              <div className="h-2 w-full rounded mt-3 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600"></div>
             </div>
+            
           ) : (
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Verify Your Number</h2>
@@ -497,7 +522,7 @@ const verifyOTP = async (e) => {
               
               <div className="mt-4 text-center">
                 <button
-                  onClick={() => setOtpSent(false)}
+                  onClick={handleChangePhoneNumber}
                   className="text-blue-600 hover:text-blue-800 font-medium text-sm"
                 >
                   Change phone number?

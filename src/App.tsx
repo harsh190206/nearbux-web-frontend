@@ -15,7 +15,7 @@ function App() {
       <Routes>
 
         
-         <Route path="/" element={<Layout />}>
+         <Route  element={<Layout />}>
           <Route path="cust" element={<Cust />} />
           <Route path="cart" element={<Cart />} />
           <Route path="wallet" element={<Wallet />} />
