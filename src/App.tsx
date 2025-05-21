@@ -9,6 +9,11 @@ import {Cart} from './pages/cart';
 import Wallet from './pages/wallet';
 import Layout from './pages/Layout'; // Assuming you have a Layout component
 import Forgotpass from './pages/forgot';
+import BSignupPage from './pages/buisness/bsignup';
+import { BSignin } from './pages/buisness/bsignin';
+import BForgotpass from './pages/buisness/bforgot';
+import BInfo from './pages/buisness/binfo';
+import ShopImage from './pages/buisness/shopimage'
 function App() {
   return (
     <BrowserRouter>
@@ -28,6 +33,16 @@ function App() {
         <Route path="customer" element={<Cust />} />
 
         <Route path="newpass" element={<Forgotpass />} />
+
+
+
+        <Route path="bsignup" element={<BSignupPage />} />
+        <Route path="bsignin" element={<BSignin />} />
+        <Route path="bnewpass" element={<BForgotpass />} />
+        <Route path="newpass" element={<Forgotpass />} />
+        <Route path="shopinfo" element={<BInfo />} />
+        <Route path="shopimage" element={<ShopImage />} />
+
 
         {/* Catch-all 404 */}
         <Route path="*" element={<NoPage />} />
