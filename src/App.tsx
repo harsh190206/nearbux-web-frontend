@@ -14,6 +14,8 @@ import { BSignin } from './pages/buisness/bsignin';
 import BForgotpass from './pages/buisness/bforgot';
 import BInfo from './pages/buisness/binfo';
 import ShopImage from './pages/buisness/shopimage'
+import Blayout from "./pages/buisness/Blayout"
+import Shop from "./pages/buisness/ShopHome"
 function App() {
   return (
     <BrowserRouter>
@@ -21,7 +23,7 @@ function App() {
 
         
          <Route  element={<Layout />}>
-          <Route path="cust" element={<Cust />} />
+          <Route path="home" element={<Cust />} />
           <Route path="cart" element={<Cart />} />
           <Route path="wallet" element={<Wallet />} />
         </Route>
@@ -42,6 +44,12 @@ function App() {
         <Route path="newpass" element={<Forgotpass />} />
         <Route path="shopinfo" element={<BInfo />} />
         <Route path="shopimage" element={<ShopImage />} />
+        <Route  element={<Blayout/>}>
+        <Route  path="bhome" element={<Shop/>} />
+
+
+
+        </Route>
 
 
         {/* Catch-all 404 */}

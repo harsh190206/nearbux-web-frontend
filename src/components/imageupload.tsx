@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 
 interface UploadComponentProps {
-  skipUrl: string;
+  skipUrl?: string;
   successRedirectDelay?: number; // Time in ms before redirecting after success
   shopId? : string | null,
   productId? : string , 
+  adverId? : string,
 }
 
 export default function UploadComponent({ 
   skipUrl, 
   successRedirectDelay = 200000000 ,
+  adverId,
+
   shopId, 
   productId, 
 }: UploadComponentProps) {
@@ -36,7 +39,11 @@ export default function UploadComponent({
       
       // Set timeout for redirect
       timer = setTimeout(() => {
-        window.location.href = skipUrl;
+        if(skipUrl){
+          window.location.href = skipUrl;
+
+        }
+       
       }, successRedirectDelay);
     }
     
@@ -81,12 +88,17 @@ export default function UploadComponent({
     const formData = new FormData();
     formData.append('image', file);
     if(productId){
-     formData.append('productId', productId); // or shopId
+     formData.append('productId', productId); // 
+
+     
     
     };
     if(shopId){
       formData.append('shopId', shopId); 
 
+    }
+    if(adverId){
+      formData.append("adverId" , adverId);
     }
     
     try {
@@ -113,7 +125,11 @@ export default function UploadComponent({
   };
 
   const handleSkip = () => {
-    window.location.href = skipUrl;
+    if(skipUrl){
+      window.location.href = skipUrl;
+
+    }
+   
   };
   
   const handleTryAgain = () => {

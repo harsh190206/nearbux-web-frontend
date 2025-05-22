@@ -54,7 +54,7 @@ export function Signin() {
       
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        navigate('/cust');
+        navigate('/home');
       }
     } catch (e: any) {
       const message = e.response?.data?.message || "Error during signin";
