@@ -46,6 +46,7 @@ function App() {
         <Route path="shopimage" element={<ShopImage />} />
         <Route  element={<Blayout/>}>
         <Route  path="bhome" element={<Shop/>} />
+        <Route  path="test" element={<Shop/>} />
 
 
 
