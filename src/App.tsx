@@ -16,12 +16,10 @@ import BInfo from './pages/buisness/binfo';
 import ShopImage from './pages/buisness/shopimage'
 import Blayout from "./pages/buisness/Blayout"
 import Shop from "./pages/buisness/ShopHome"
-import PromotionManager from './pages/Inventory/ProductManager';
-import InventoryManager from './pages/InventoryManager/InventoryManager';
-import BusinessAnalyticsDashboard from './pages/buisness/BussinessAnalyst';
+import InventoryPage from './pages/buisness/inventory';
 import QuickBilling from './pages/Billing/QuickBilling';
 import ProfilePage from './pages/ProfilePage';
-
+import ShopAnalyticsDashboard from "./pages/buisness/analytics"
 function App() {
   return (
     <BrowserRouter>
@@ -52,9 +50,9 @@ function App() {
         <Route  element={<Blayout/>}>
         <Route  path="bhome" element={<Shop/>} />
 
-        <Route path="inventory" element={<PromotionManager  />} />
-        <Route path="inventoryManager" element={<InventoryManager  />} />
-        <Route path="bussinessAnalyst" element={<BusinessAnalyticsDashboard  />} />
+        <Route path="inventory" element={<InventoryPage  />} />
+        
+        <Route path="buisnessanalytics" element={<ShopAnalyticsDashboard  />} />
         <Route path="quickBilling" element={<QuickBilling  />} />
         <Route path="profilePage" element={<ProfilePage  />} />
 

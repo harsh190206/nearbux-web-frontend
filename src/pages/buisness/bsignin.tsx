@@ -54,7 +54,9 @@ export function BSignin() {
       
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        navigate('/bhome');
+        localStorage.setItem("shopId", response.data.shopId);
+        
+        // navigate('/bhome');
       }
     } catch (e: any) {
       const message = e.response?.data?.message || "Error during signin";

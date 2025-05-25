@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import axios from 'axios';
+import Lowerbhome from './lowerbhome';
 
-// Upload Component that stores image temporarily
-function UploadComponent({ 
+// Upload Component (No changes needed for this component)
+function UploadComponent({
   onImageSelect,
-  hideSkip = false
+  hideSkip = false,
+  disabled = false // Added disabled prop
 }) {
   const [file, setFile] = useState(null);
-  const[upload, setupload] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,7 +18,6 @@ function UploadComponent({
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
       setError(null);
-      // Pass the file to parent component
       onImageSelect(selectedFile);
     }
   };
@@ -33,11 +35,10 @@ function UploadComponent({
     e.preventDefault();
     setIsDragging(false);
     setError(null);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const selectedFile = e.dataTransfer.files[0];
       setFile(selectedFile);
-      // Pass the file to parent component
       onImageSelect(selectedFile);
     }
   };
@@ -56,7 +57,7 @@ function UploadComponent({
           </svg>
           Upload Promotion Image
         </h3>
-        
+
         {error && (
           <div className="mb-6">
             <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
@@ -73,43 +74,44 @@ function UploadComponent({
             </div>
           </div>
         )}
-        
+
         <div
           className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
             isDragging ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-blue-400"
           } ${file ? "bg-blue-50 border-blue-400" : ""}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={disabled ? null : handleDragOver} // Disable drag/drop if disabled
+          onDragLeave={disabled ? null : handleDragLeave}
+          onDrop={disabled ? null : handleDrop}
         >
           {!file ? (
             <div className="space-y-4">
               <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-8 w-8 text-blue-600" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
               </div>
               <div>
                 <p className="text-gray-700 font-medium mb-1">Drag and drop your image here</p>
                 <p className="text-gray-500 text-sm mb-4">or</p>
-                <label className="inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition duration-200 shadow-md">
+                <label className={`inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition duration-200 shadow-md ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   Browse Files
-                  <input 
-                    type="file" 
-                    onChange={handleChange} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    onChange={handleChange}
+                    className="hidden"
                     accept="image/*"
+                    disabled={disabled} // Disable input if disabled
                   />
                 </label>
               </div>
@@ -118,18 +120,18 @@ function UploadComponent({
           ) : (
             <div className="space-y-3">
               <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-green-100">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-6 w-6 text-green-600" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M5 13l4 4L19 7" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
                   />
                 </svg>
               </div>
@@ -137,9 +139,10 @@ function UploadComponent({
                 <p className="text-gray-800 font-medium">{file.name}</p>
                 <p className="text-gray-500 text-sm">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
-              <button 
+              <button
                 onClick={handleRemoveFile}
-                className="text-blue-600 hover:text-blue-800 underline text-sm transition duration-200"
+                className={`text-blue-600 hover:text-blue-800 underline text-sm transition duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={disabled} // Disable button if disabled
               >
                 Remove file
               </button>
@@ -151,21 +154,52 @@ function UploadComponent({
   );
 }
 
+// --- Shop Component ---
 export default function Shop() {
+  const navigate = useNavigate();
   const [promotionTitle, setPromotionTitle] = useState('');
   const [promotionMessage, setPromotionMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [shopId, setShopId] = useState(null);
   const [shopKeeperId, setShopKeeperId] = useState(null);
+  const [paymentSuccessful, setPaymentSuccessful] = useState(false);
+  const [hasActivePromotion, setHasActivePromotion] = useState(false);
+  const [activePromotionDetails, setActivePromotionDetails] = useState(null); // New state for promotion details
 
-  // Get IDs from localStorage on component mount
+  // Get IDs from localStorage and check for active promotion on component mount
   useEffect(() => {
     const storedShopId = localStorage.getItem("shopId");
     const storedOwnerId = localStorage.getItem("ownerId");
-    
-    if (storedShopId) setShopId(parseInt(storedShopId));
-    if (storedOwnerId) setShopKeeperId(parseInt(storedOwnerId));
+
+    if (storedShopId) {
+      setShopId(parseInt(storedShopId));
+    }
+    if (storedOwnerId) {
+      setShopKeeperId(parseInt(storedOwnerId));
+    }
+
+    const checkIfPromotionExists = async () => {
+      if (storedShopId) {
+        try {
+          // First, check if a promotion exists for this shop
+          const alreadyResponse = await axios.post("http://localhost:3000/shop/already", { shopId: storedShopId });
+
+          if (alreadyResponse.data.message === 1) {
+            setHasActivePromotion(true);
+            // If a promotion exists, fetch its details
+            const promotionDetailsResponse = await axios.get(`http://localhost:3000/shop/promotions/${storedShopId}`);
+            setActivePromotionDetails(promotionDetailsResponse.data);
+          }
+        } catch (error) {
+          console.error("Error checking for existing promotion or fetching details:", error);
+          // If there's an error fetching details, assume no active promotion or handle accordingly
+          setHasActivePromotion(false);
+          setActivePromotionDetails(null);
+        }
+      }
+    };
+    checkIfPromotionExists();
   }, []);
 
   const handleImageSelect = (file) => {
@@ -190,7 +224,7 @@ export default function Shop() {
     return response.json();
   };
 
-  const createPromotion = async (title, message, shopId, shopKeeperId) => {
+  const createPromotionBackend = async (title, message, shopId, shopKeeperId) => {
     const response = await fetch('http://localhost:3000/shop/create-promotion', {
       method: 'POST',
       headers: {
@@ -212,13 +246,37 @@ export default function Shop() {
     return response.json();
   };
 
-  const handleCreatePromotion = async () => {
+  // Helper function to reset the form state
+  const resetForm = () => {
+    setPromotionTitle('');
+    setPromotionMessage('');
+    setSelectedImage(null);
+    setPaymentSuccessful(false);
+    // When resetting, re-check for active promotion to reflect the new state
+    const storedShopId = localStorage.getItem("shopId");
+    if (storedShopId) {
+      axios.post("http://localhost:3000/shop/already", { shopId: storedShopId })
+        .then(response => {
+          if (response.data.message === 1) {
+            setHasActivePromotion(true);
+            axios.get(`http://localhost:3000/shop/promotions/${storedShopId}`)
+              .then(detailsResponse => setActivePromotionDetails(detailsResponse.data))
+              .catch(error => console.error("Error fetching promotion details after reset:", error));
+          } else {
+            setHasActivePromotion(false);
+            setActivePromotionDetails(null);
+          }
+        })
+        .catch(error => console.error("Error checking for existing promotion after reset:", error));
+    }
+  };
+
+  const handleInitiatePayment = () => {
     if (!promotionTitle.trim() || !promotionMessage.trim()) {
       alert('Please fill in both promotion title and message');
       return;
     }
-    
-    // Add the check for selectedImage here
+
     if (!selectedImage) {
       alert('Please upload a promotion image.');
       return;
@@ -229,40 +287,276 @@ export default function Shop() {
       return;
     }
 
-    setIsCreating(true);
-    
+    setIsProcessing(true);
+
+    const options = {
+      key: "rzp_test_oFu38dED2ID6et", // Replace with your actual Razorpay Key
+      amount: 4900, // Amount in paise (e.g., 9900 for 99 INR)
+      currency: "INR",
+      name: "Promotion Payment",
+      description: "Payment for your promotion",
+      handler: function (response) {
+        alert("Payment successful! You can now create your promotion.");
+        setPaymentSuccessful(true);
+        setIsProcessing(false);
+      },
+      modal: {
+        ondismiss: function () {
+          alert("Payment closed. Please try again to make the payment.");
+          setIsProcessing(false);
+          setPaymentSuccessful(false);
+        },
+        escape: false,
+        backdropclose: false,
+      },
+      theme: {
+        color: "#3399cc",
+      },
+    };
+
+    if (typeof window.Razorpay === 'undefined') {
+      alert("Razorpay SDK not loaded. Please ensure it's included in your HTML.");
+      setIsProcessing(false);
+      return;
+    }
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.on("payment.failed", function (response) {
+      alert("Payment failed. Please try again.");
+      setIsProcessing(false);
+      setPaymentSuccessful(false);
+    });
+
+    razorpay.open();
+  };
+
+  const handleCreatePromotion = async () => {
+    setIsProcessing(true);
+
     try {
-      // Step 1: Create the promotion record first
-      const promotionData = await createPromotion(
+      const promotionData = await createPromotionBackend(
         promotionTitle.trim(),
         promotionMessage.trim(),
         shopId,
         shopKeeperId
       );
 
-      // Step 2: Upload image if one was selected
-      // This check is redundant now because selectedImage is mandatory, but harmless
       if (selectedImage && promotionData.adverId) {
         await uploadImageWithAdverId(promotionData.adverId, selectedImage);
       }
 
-      // Success
       alert('Promotion created successfully!');
-      setPromotionTitle('');
-      setPromotionMessage('');
-      setSelectedImage(null);
-      
+      resetForm();
+      navigate("/bhome");
     } catch (error) {
       console.error('Failed to create promotion:', error);
-      alert(`Failed to create promotion: ${error.message}`);
+      alert(`Failed to create promotion: ${error.message}`); // Show alert for creation failure
     } finally {
-      setIsCreating(false);
+      setIsProcessing(false);
     }
   };
 
-  // Modify isFormValid to include selectedImage check
   const isFormValid = promotionTitle.trim() && promotionMessage.trim() && selectedImage && shopId && shopKeeperId;
+  if (hasActivePromotion) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6 flex items-center justify-center relative overflow-hidden">
+        {/* Enhanced animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-r from-indigo-200 to-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{animationDelay: '2s'}}></div>
+          <div className="absolute top-40 left-1/2 w-80 h-80 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full mix-blend-multiply filter blur-2xl opacity-15 animate-pulse" style={{animationDelay: '4s'}}></div>
+        </div>
 
+        <div className="relative bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 max-w-7xl w-full">
+          {/* Subtle glowing border effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 rounded-3xl blur-sm opacity-10 animate-pulse"></div>
+          
+          <div className="relative z-10 p-8">
+            {/* Enhanced Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl mb-6 shadow-xl transform hover:scale-110 transition-all duration-300">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-800 bg-clip-text text-transparent mb-4">
+                Active Promotion Dashboard
+              </h1>
+              <p className="text-slate-600 text-lg font-medium">Monitor and manage your current promotional campaign</p>
+              <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mx-auto mt-4"></div>
+            </div>
+
+            {activePromotionDetails ? (
+              <div className="space-y-8">
+                {/* Enhanced Title and Message Section */}
+                <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-3xl p-8 border border-blue-100/50 shadow-xl">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Title Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-semibold text-blue-600 uppercase tracking-wider">Promotion Title</span>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100/50">
+                        <h2 className="text-2xl font-bold text-slate-800 leading-tight">
+                          {activePromotionDetails.title}
+                        </h2>
+                      </div>
+                    </div>
+
+                    {/* Message Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                        <span className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">Promotion Message</span>
+                      </div>
+                      <div className="bg-white rounded-2xl p-6 shadow-lg border border-indigo-100/50">
+                        <p className="text-slate-700 text-lg leading-relaxed">
+                          {activePromotionDetails.message}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enhanced Content Grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                  {/* Image Section - Takes 2 columns on XL screens */}
+                  {activePromotionDetails.image && (
+                    <div className="xl:col-span-2">
+                      <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+                        <div className="flex items-center space-x-3 mb-6">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-800">Promotion Showcase</h3>
+                        </div>
+                        <div className="relative overflow-hidden rounded-2xl shadow-xl group">
+                          <img
+                            src={activePromotionDetails.image}
+                            alt="Promotion Showcase"
+                            className="w-full h-80 object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stats and Status - Takes 1 column on XL screens */}
+                  <div className="space-y-6">
+                    {/* Performance Analytics */}
+                    <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+                      <div className="flex items-center space-x-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">Analytics</h3>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {/* Views Card */}
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <svg className="w-6 h-6 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              <span className="text-blue-100 font-medium">Views</span>
+                            </div>
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                          </div>
+                          <p className="text-3xl font-bold">{activePromotionDetails.views.toLocaleString()}</p>
+                        </div>
+
+                        {/* Clicks Card */}
+                        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <svg className="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                              </svg>
+                              <span className="text-indigo-100 font-medium">Clicks</span>
+                            </div>
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                          </div>
+                          <p className="text-3xl font-bold">{activePromotionDetails.clicks.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Section */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-6 border-l-4 border-green-500 shadow-xl">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-green-900 font-bold text-lg mb-2">Active Status</h4>
+                          <p className="text-green-700 leading-relaxed">Your promotion is currently live and performing well. Only one promotion can be active at a time.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTR Section */}
+                <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-3xl p-6 shadow-xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-slate-800 font-bold text-xl">Click-Through Rate</h4>
+                        <p className="text-slate-600">Performance metric</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-slate-800">
+                        {((activePromotionDetails.clicks / activePromotionDetails.views) * 100).toFixed(1)}%
+                      </p>
+                      <p className="text-slate-500 text-sm">Conversion rate</p>
+                    </div>
+                  </div>
+                </div>
+              
+              </div>
+              
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-500 border-t-transparent mb-6"></div>
+                <p className="text-slate-600 text-xl font-medium">Loading your promotion details...</p>
+              </div>
+            )};
+
+         
+              
+
+            
+          
+             
+          </div>
+          {   activePromotionDetails &&    <Lowerbhome></Lowerbhome> }
+        </div>
+      
+       
+      </div>
+       
+    );
+   
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -317,19 +611,21 @@ export default function Shop() {
                     </svg>
                     Promotion Title
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={promotionTitle}
                     onChange={(e) => setPromotionTitle(e.target.value)}
                     placeholder="Enter an eye-catching title for your promotion"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg"
+                    disabled={paymentSuccessful || isProcessing}
                   />
                 </div>
 
                 {/* Image Upload */}
-                <UploadComponent 
+                <UploadComponent
                   onImageSelect={handleImageSelect}
-                  hideSkip={true} 
+                  hideSkip={true}
+                  disabled={paymentSuccessful || isProcessing} // Pass disabled prop
                 />
               </div>
 
@@ -349,6 +645,7 @@ export default function Shop() {
                     placeholder="Write a compelling message that describes your promotion. Include details about discounts, offers, or special deals..."
                     rows={8}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-lg resize-none"
+                    disabled={paymentSuccessful || isProcessing}
                   />
                   <p className="text-sm text-gray-500 mt-2">
                     {promotionMessage.length}/500 characters
@@ -361,7 +658,7 @@ export default function Shop() {
                     <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
                       <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                      </svg>
                       Image Selected
                     </h3>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -400,38 +697,70 @@ export default function Shop() {
               </div>
             </div>
 
-            {/* Create Button */}
+            {/* Action Buttons */}
             <div className="mt-10 text-center">
-              <button
-                onClick={handleCreatePromotion}
-                disabled={isCreating || !isFormValid}
-                className={`px-12 py-4 rounded-xl font-bold text-lg transition duration-300 transform hover:scale-105 shadow-lg ${
-                  isCreating || !isFormValid
-                    ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
-                    : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-green-200"
-                }`}
-              >
-                {isCreating ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin h-6 w-6 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Creating Promotion...
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Create Promotion
-                  </div>
-                )}
-              </button>
+              {!paymentSuccessful ? (
+                <button
+                  onClick={handleInitiatePayment}
+                  disabled={isProcessing || !isFormValid}
+                  className={`px-12 py-4 rounded-xl font-bold text-lg transition duration-300 transform hover:scale-105 shadow-lg ${
+                    isProcessing || !isFormValid
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-blue-200"
+                  }`}
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center">
+                      <svg className="animate-spin h-6 w-6 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Redirecting to Payment...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 100-4 2 2 0 000 4z" />
+                      </svg>
+                      Pay Now
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreatePromotion}
+                  disabled={isProcessing}
+                  className={`px-12 py-4 rounded-xl font-bold text-lg transition duration-300 transform hover:scale-105 shadow-lg ${
+                    isProcessing
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-green-200"
+                  }`}
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center">
+                      <svg className="animate-spin h-6 w-6 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating Promotion...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Create Promotion
+                    </div>
+                  )}
+                </button>
+              )}
             </div>
+           
           </div>
+         
         </div>
+        <Lowerbhome> </Lowerbhome>
       </div>
     </div>
   );
-}
+};
