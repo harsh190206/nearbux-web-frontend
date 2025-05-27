@@ -17,14 +17,16 @@ import ShopImage from './pages/buisness/shopimage'
 import Blayout from "./pages/buisness/Blayout"
 import Shop from "./pages/buisness/ShopHome"
 import InventoryPage from './pages/buisness/inventory';
-import QuickBilling from './pages/Billing/QuickBilling';
 import ProfilePage from './pages/ProfilePage';
 import ShopAnalyticsDashboard from "./pages/buisness/analytics"
+import ShopInfoPage from './pages/buisness/shopKepperInfo';
+import NearBuxLanding from './pages/Landingpage';
+import BillingComponent from './pages/buisness/billing';
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
+        <Route path='/' element ={<NearBuxLanding/>}/>
         <Route element={<Layout />}>
         <Route path="home" element={<Cust />} />
         <Route path="cart" element={<Cart />} />
@@ -52,9 +54,11 @@ function App() {
 
         <Route path="inventory" element={<InventoryPage  />} />
         
-        <Route path="buisnessanalytics" element={<ShopAnalyticsDashboard  />} />
-        <Route path="quickBilling" element={<QuickBilling  />} />
+        <Route path="analytics" element={<ShopAnalyticsDashboard  />} />
+        
         <Route path="profilePage" element={<ProfilePage  />} />
+        <Route path = "bprofile" element = {<ShopInfoPage/>} />
+        <Route path = "billing" element = {<BillingComponent/>} />
 
 
         </Route>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Eye, Check, X, Printer, Ban } from "lucide-react";
 import { Navigate, useNavigate } from "react-router";
+import { BACKEND_URL } from "../../config/constant";
 export default function Lowerbhome() {
   const [selected, setSelected] = useState("orders");
   const [orders, setOrders] = useState([]);
@@ -14,7 +15,7 @@ export default function Lowerbhome() {
     const fetchOrders = async () => {
       try {
         const shopId = localStorage.getItem("shopId");
-        const response = await fetch("http://localhost:3000/shop/orders", {
+        const response = await fetch(`${BACKEND_URL}/shop/orders`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export default function Lowerbhome() {
   // Handle order status change
   const updateOrderStatus = async (orderId, status) => {
     try {
-      const response = await fetch("http://localhost:3000/shop/orders/update-status", {
+      const response = await fetch(`${BACKEND_URL}/shop/orders/update-status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

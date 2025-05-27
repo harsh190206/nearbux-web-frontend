@@ -13,7 +13,7 @@ export default function Layout() {
       <nav className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-4 py-3 shadow-md flex items-center justify-between">
         {/* Logo */}
       
-        <div onClick={()=>navigate("/shop")} className="flex rounded-2xl items-center space-x-2">
+        <div onClick={()=>navigate("/bhome")} className="flex rounded-2xl items-center space-x-2">
         <img src="/nearbux.png" className="h-10 rounded-md " ml-2 mr-2 p-2 alt="" />
         
           <span className="text-xl font-bold">NearBux</span>
@@ -21,7 +21,7 @@ export default function Layout() {
 
         {/* Links */}
         <div className="flex items-center space-x-6 text-sm md:text-base">
-          <Link to="/shop" className="flex items-center space-x-1 hover:text-yellow-300">
+          <Link to="/bhome" className="flex items-center space-x-1 hover:text-yellow-300">
             <FaHome />
             <span>Home</span>
           </Link>

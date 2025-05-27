@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from "../../config/constant";
 
 export function BSignin() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export function BSignin() {
   const [animateForm, setAnimateForm] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Animation effects
+  // Animation effectsf
   useEffect(() => {
     setAnimateForm(true);
   }, []);
@@ -47,7 +48,7 @@ export function BSignin() {
         userInput = '+91' + userInput;
       }
 
-      const response = await axios.post("http://localhost:3000/shop/signin", { userInput, password });
+      const response = await axios.post(`${BACKEND_URL}/shop/signin`, { userInput, password });
       if (response.status === 500) {
         throw new Error(response.data.message);
       }
@@ -55,8 +56,9 @@ export function BSignin() {
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("shopId", response.data.shopId);
+        localStorage.setItem("ownerId", response.data.ownerId)  ;
         
-        // navigate('/bhome');
+        navigate('/bhome');
       }
     } catch (e: any) {
       const message = e.response?.data?.message || "Error during signin";

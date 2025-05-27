@@ -54,6 +54,9 @@ export function Signin() {
       
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
+      
+        console.log(response.data.shopId);
+
         navigate('/home');
       }
     } catch (e: any) {

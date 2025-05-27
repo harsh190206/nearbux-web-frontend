@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, Save, X, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from "../../config/constant";
 
 // UploadComponent from your existing code
 function UploadComponent({ 
@@ -89,7 +91,7 @@ function UploadComponent({
     }
     
     try {
-      const res = await fetch('http://localhost:3000/api/upload-image', {
+      const res = await fetch(`${BACKEND_URL}/api/upload-image`, {
         method: 'POST',
         body: formData,
       });
@@ -121,6 +123,7 @@ function UploadComponent({
     setError(null);
     setFile(null);
   };
+   
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto my-8">
@@ -289,21 +292,42 @@ function UploadComponent({
   );
 }
 
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Save, X, Package, Upload } from 'lucide-react';
+
 // Main Inventory Page Component
 export default function InventoryPage() {
+  const navigate = (path) => {
+    window.location.href = path;
+  };
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showBulkAddForm, setShowBulkAddForm] = useState(false);
   const [showUploadComponent, setShowUploadComponent] = useState(null);
   
   // Form states
   const [editForm, setEditForm] = useState({ price: '', quantity: '' });
   const [addForm, setAddForm] = useState({ name: '', price: '', quantity: '' });
+  const [bulkProducts, setBulkProducts] = useState([
+    { name: '', price: '', quantity: '' }
+  ]);
+  const [bulkLoading, setBulkLoading] = useState(false);
   
   // Get shopId from URL params or context - for demo using static value
   const shopId = localStorage.getItem("shopId");
+  
+  if(!shopId){
+    return <div onClick={()=>navigate("/bsignin")} className='h-screen flex items-center justify-center '>
+      <div className=' bg-blue-500 rounded-4xl p-3'>
+      <p>Sign in again
+      </p>
+      </div>
+   
+    </div>
+  }
 
   // Fetch products on component mount
   useEffect(() => {
@@ -314,7 +338,7 @@ export default function InventoryPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://localhost:3000/shop/products/${shopId}`);
+      const response = await fetch(`${BACKEND_URL}/shop/products/${shopId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -337,7 +361,7 @@ export default function InventoryPage() {
 
   const handleSaveEdit = async (productId) => {
     try {
-      const response = await fetch(`http://localhost:3000/shop/products/${productId}`, {
+      const response = await fetch(`${BACKEND_URL}/shop/products/${productId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -370,7 +394,7 @@ export default function InventoryPage() {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3000/shop/products/${productId}`, {
+      const response = await fetch(`${BACKEND_URL}/shop/products/${productId}`, {
         method: 'DELETE'
       });
 
@@ -393,7 +417,7 @@ export default function InventoryPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/shop/products', {
+      const response = await fetch(`${BACKEND_URL}/shop/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -422,6 +446,80 @@ export default function InventoryPage() {
     }
   };
 
+  // Bulk add functions
+  const addBulkProductRow = () => {
+    setBulkProducts([...bulkProducts, { name: '', price: '', quantity: '' }]);
+  };
+
+  const removeBulkProductRow = (index) => {
+    if (bulkProducts.length > 1) {
+      setBulkProducts(bulkProducts.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateBulkProduct = (index, field, value) => {
+    const updated = bulkProducts.map((product, i) => 
+      i === index ? { ...product, [field]: value } : product
+    );
+    setBulkProducts(updated);
+  };
+
+  const handleBulkAddProducts = async () => {
+    // Validate all products
+    const validProducts = bulkProducts.filter(product => 
+      product.name.trim() && product.price && product.quantity
+    );
+
+    if (validProducts.length === 0) {
+      alert('Please fill at least one complete product');
+      return;
+    }
+
+    if (validProducts.length !== bulkProducts.length) {
+      if (!confirm('Some products have missing fields and will be skipped. Continue?')) {
+        return;
+      }
+    }
+
+    setBulkLoading(true);
+    try {
+      const productsToAdd = validProducts.map(product => ({
+        name: product.name.trim(),
+        price: parseInt(product.price),
+        quantity: parseInt(product.quantity),
+        shopId: shopId
+      }));
+
+      const response = await fetch(`${BACKEND_URL}/shop/products/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: productsToAdd })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add products');
+      }
+      
+      const result = await response.json();
+      
+      // Add new products to the state
+      setProducts([...products, ...result.products]);
+      
+      // Reset form
+      setShowBulkAddForm(false);
+      setBulkProducts([{ name: '', price: '', quantity: '' }]);
+      
+      alert(`Successfully added ${result.products.length} products!`);
+      setError(null);
+    } catch (err) {
+      console.error('Error bulk adding products:', err);
+      setError(err.message);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -431,7 +529,7 @@ export default function InventoryPage() {
         </div>
       </div>
     );
-  }
+  };
 
   if (showUploadComponent) {
     return (
@@ -454,7 +552,7 @@ export default function InventoryPage() {
           <UploadComponent 
             productId={showUploadComponent}
             shopId={shopId}
-            skipUrl="#"
+            skipUrl="/inventory"
             successRedirectDelay={3000}
           />
         </div>
@@ -471,13 +569,22 @@ export default function InventoryPage() {
             <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
             <p className="text-gray-600 mt-2">Manage your products, prices, and quantities</p>
           </div>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowBulkAddForm(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 flex items-center"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Bulk Add
+            </button>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Product
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -542,6 +649,92 @@ export default function InventoryPage() {
               >
                 <Save className="w-4 h-4 mr-2" />
                 Add Product
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Add Products Form */}
+        {showBulkAddForm && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Bulk Add Products</h2>
+              <button
+                onClick={() => {
+                  setShowBulkAddForm(false);
+                  setBulkProducts([{ name: '', price: '', quantity: '' }]);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-4">
+              {bulkProducts.map((product, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                    <input
+                      type="text"
+                      value={product.name}
+                      onChange={(e) => updateBulkProduct(index, 'name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter product name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                    <input
+                      type="number"
+                      value={product.price}
+                      onChange={(e) => updateBulkProduct(index, 'price', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter price"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      value={product.quantity}
+                      onChange={(e) => updateBulkProduct(index, 'quantity', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => removeBulkProductRow(index)}
+                      className="w-full bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition duration-200 flex items-center justify-center"
+                      disabled={bulkProducts.length === 1}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-between">
+              <button
+                onClick={addBulkProductRow}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Row
+              </button>
+              <button
+                onClick={handleBulkAddProducts}
+                disabled={bulkLoading}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center disabled:opacity-50"
+              >
+                {bulkLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {bulkLoading ? 'Adding...' : 'Add All Products'}
               </button>
             </div>
           </div>
@@ -658,13 +851,22 @@ export default function InventoryPage() {
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
             <p className="text-gray-600 mb-4">Start by adding your first product to the inventory</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 inline-flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Your First Product
-            </button>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setShowBulkAddForm(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 inline-flex items-center"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Add Products
+              </button>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 inline-flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Single Product
+              </button>
+            </div>
           </div>
         )}
       </div>

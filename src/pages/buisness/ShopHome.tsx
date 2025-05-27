@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import Lowerbhome from './lowerbhome';
+import { BACKEND_URL } from "../../config/constant";
 
 // Upload Component (No changes needed for this component)
 function UploadComponent({
@@ -156,8 +157,10 @@ function UploadComponent({
 
 // --- Shop Component ---
 export default function Shop() {
+  const [isapi , setApi] = useState(0);
   const navigate = useNavigate();
   const [promotionTitle, setPromotionTitle] = useState('');
+  const [present ,setPresent   ] = useState(false);
   const [promotionMessage, setPromotionMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -183,13 +186,20 @@ export default function Shop() {
       if (storedShopId) {
         try {
           // First, check if a promotion exists for this shop
-          const alreadyResponse = await axios.post("http://localhost:3000/shop/already", { shopId: storedShopId });
+          const alreadyResponse = await axios.post(`${BACKEND_URL}/shop/already`, { shopId: storedShopId });
 
           if (alreadyResponse.data.message === 1) {
             setHasActivePromotion(true);
             // If a promotion exists, fetch its details
-            const promotionDetailsResponse = await axios.get(`http://localhost:3000/shop/promotions/${storedShopId}`);
-            setActivePromotionDetails(promotionDetailsResponse.data);
+            if(isapi ===1){
+              const promotionDetailsResponse = await axios.get(`${BACKEND_URL}/shop/promotions/${storedShopId}`);
+          
+              setActivePromotionDetails(promotionDetailsResponse.data);
+
+            } else {
+              alert ("not activated yet . try after users page is live ")
+            }
+            
           }
         } catch (error) {
           console.error("Error checking for existing promotion or fetching details:", error);
@@ -211,7 +221,7 @@ export default function Shop() {
     formData.append('image', imageFile);
     formData.append('adverId', adverId.toString());
 
-    const response = await fetch('http://localhost:3000/api/upload-image', {
+    const response = await fetch(`${BACKEND_URL}/api/upload-image`, {
       method: 'POST',
       body: formData,
     });
@@ -225,7 +235,7 @@ export default function Shop() {
   };
 
   const createPromotionBackend = async (title, message, shopId, shopKeeperId) => {
-    const response = await fetch('http://localhost:3000/shop/create-promotion', {
+    const response = await fetch(`${BACKEND_URL}/shop/create-promotion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -255,11 +265,12 @@ export default function Shop() {
     // When resetting, re-check for active promotion to reflect the new state
     const storedShopId = localStorage.getItem("shopId");
     if (storedShopId) {
-      axios.post("http://localhost:3000/shop/already", { shopId: storedShopId })
+      console.log(storedShopId + "test") ;
+      axios.post(`${BACKEND_URL}/shop/already`, { shopId: storedShopId })
         .then(response => {
           if (response.data.message === 1) {
             setHasActivePromotion(true);
-            axios.get(`http://localhost:3000/shop/promotions/${storedShopId}`)
+            axios.get(`${BACKEND_URL}/shop/promotions/${storedShopId}`)
               .then(detailsResponse => setActivePromotionDetails(detailsResponse.data))
               .catch(error => console.error("Error fetching promotion details after reset:", error));
           } else {
@@ -269,6 +280,11 @@ export default function Shop() {
         })
         .catch(error => console.error("Error checking for existing promotion after reset:", error));
     }
+    else {
+      console.log('hiii hii')
+      navigate("/bsignin")
+    }
+   
   };
 
   const handleInitiatePayment = () => {
@@ -286,11 +302,14 @@ export default function Shop() {
       alert('Shop ID or Owner ID not found. Please make sure you are logged in.');
       return;
     }
+    if(isapi===0){
+      alert ("this is feature willl activated once users join the site ")
 
+    }
     setIsProcessing(true);
 
     const options = {
-      key: "rzp_test_oFu38dED2ID6et", // Replace with your actual Razorpay Key
+      key: "rzp_test_oFu38dED2ID6et", 
       amount: 4900, // Amount in paise (e.g., 9900 for 99 INR)
       currency: "INR",
       name: "Promotion Payment",
@@ -315,7 +334,7 @@ export default function Shop() {
     };
 
     if (typeof window.Razorpay === 'undefined') {
-      alert("Razorpay SDK not loaded. Please ensure it's included in your HTML.");
+    ;
       setIsProcessing(false);
       return;
     }
@@ -355,6 +374,7 @@ export default function Shop() {
       setIsProcessing(false);
     }
   };
+ 
 
   const isFormValid = promotionTitle.trim() && promotionMessage.trim() && selectedImage && shopId && shopKeeperId;
   if (hasActivePromotion) {
@@ -557,6 +577,9 @@ export default function Shop() {
     );
    
   }
+  
+  
+   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -583,6 +606,7 @@ export default function Shop() {
               <p className="text-yellow-800">
                 Missing required information: Shop ID ({shopId || 'Not found'}) or Owner ID ({shopKeeperId || 'Not found'})
               </p>
+              <div onClick={()=>navigate("/bsignin")} className = "p-2 ml-4 rounded-3xl bg-blue-300">Signin again </div>
             </div>
           </div>
         )}

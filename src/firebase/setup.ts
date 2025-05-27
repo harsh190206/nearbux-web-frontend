@@ -12,7 +12,3 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Disable captcha for testing
-auth.settings.appVerificationDisabledForTesting = true;

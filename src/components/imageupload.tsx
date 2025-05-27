@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BACKEND_URL } from "../config/constant";
 
 interface UploadComponentProps {
   skipUrl?: string;
@@ -102,7 +103,7 @@ export default function UploadComponent({
     }
     
     try {
-      const res = await fetch('http://localhost:3000/api/upload-image', {
+      const res = await fetch(`${BACKEND_URL}/api/upload-image`, {
         method: 'POST',
         body: formData,
       });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router";
+import { BACKEND_URL } from "../../config/constant";
 import axios from 'axios';
 import { 
   initializeApp 
@@ -134,6 +135,12 @@ const BSignupPage = () => {
   
   const validateInputs = async (): Promise<boolean> => {
     const { name, username, phoneNumber, password } = formData;
+
+    if (/^\d+$/.test(username)) {
+      setError("Username cannot be only numbers");
+      return false;
+    }
+    
   
     if (!name || !username || !phoneNumber || !password) {
       setError("All fields are required");
@@ -153,12 +160,12 @@ const BSignupPage = () => {
     const phonePattern = /^\+91\d{10}$/;
 
     if (!phonePattern.test(formatPhoneNumber(phoneNumber))) {
-      setError("Please enter a valid phone number with country code (e.g., +1234567890)");
+      setError("Please enter a valid phone number without country code ");
       return false;
     }
   
     try {
-      const res = await axios.post('http://localhost:3000/shop/validate', {
+      const res = await axios.post(`${BACKEND_URL}/shop/validate`, {
         username,
         phoneNumber: formatPhoneNumber(phoneNumber)
       });
@@ -247,7 +254,7 @@ const BSignupPage = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:3000/shop/signup',
+        `${BACKEND_URL}3000/shop/signup`,
         payload,
         {
           headers: {
@@ -279,7 +286,7 @@ const BSignupPage = () => {
         message = err.message;
       }
     
-      setError(`Signup error: ${message}`);
+      setError(`Signup error`);
     } finally {
       setLoading(false);
     }

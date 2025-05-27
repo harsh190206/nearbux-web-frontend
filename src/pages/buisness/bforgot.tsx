@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from "../../config/constant";
 import axios from 'axios';
 import {
   initializeApp
@@ -209,7 +210,7 @@ const BForgotpass = () => {
 
       // Call backend API to update password
       const response = await axios.post(
-        'http://localhost:3000/shop/updatepass',
+        `${BACKEND_URL}/shop/updatepass`,
         {
           phoneNumber: formatPhoneNumber(phoneNumber),
           newPassword: newPassword

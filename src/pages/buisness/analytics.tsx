@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Package, Coins, ShoppingCart, Calendar, Star } from 'lucide-react';
-
+import { useNavigate } from 'react-router';
+import { BACKEND_URL } from "../../config/constant";
 const ShopAnalyticsDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
   }, []);
-
+let found =1;
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       // Get shopId from localStorage (assuming it's stored there)
-      const shopId = localStorage.getItem('shopId') || '1'; // Default to 1 for demo
+      const shopId = localStorage.getItem('shopId') ;
+      if(!shopId){
+        found=0; 
+      }
       
-      const response = await fetch('http://localhost:3000/shop/analytics', {
+      const response = await fetch(`${BACKEND_URL}/shop/analytics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,6 +47,19 @@ const ShopAnalyticsDashboard = () => {
       setLoading(false);
     }
   };
+
+
+  if(found===0){
+    return <div className="h-screen flex justify-center items-center">
+       
+       <div onClick={()=>navigate("/bsignin")} className='bg-blue-500 p-4 hover:cursor-pointer rounded-2xl '>
+           <p className="text-3xl font-medium text-amber-100">Signin</p>
+         
+       </div>
+
+    </div>
+
+   }
 
   if (loading) {
     return (
