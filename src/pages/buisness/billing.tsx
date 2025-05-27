@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Minus, ShoppingCart, Printer, Database, X } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, Printer, Database, X, Package } from 'lucide-react';
 import { BACKEND_URL } from "../../config/constant";
+
 const BillingComponent = () => {
   const [products, setProducts] = useState([]);
   const [billItems, setBillItems] = useState([]);
@@ -294,12 +295,17 @@ const BillingComponent = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    {product.image && (
+                    {product.image ? (
                       <img
                         src={product.image}
                         alt={product.name}
                         className="w-full h-32 object-cover rounded-md mb-3"
                       />
+                    ) : (
+                      <div className="w-full h-32 bg-gray-100 rounded-md mb-3 flex flex-col items-center justify-center text-gray-500">
+                        <Package className="h-8 w-8 mb-2" />
+                        <span className="text-sm">No Image</span>
+                      </div>
                     )}
                     <h3 className="font-semibold text-gray-800">{product.name}</h3>
                     <p className="text-gray-600">Price: ₹{product.price}</p>

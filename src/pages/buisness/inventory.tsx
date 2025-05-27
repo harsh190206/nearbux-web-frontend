@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus, Upload, Save, X, Package } from 'lucide-react';
+import { Search ,Edit2, Trash2, Plus, Upload, Save, X, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from "../../config/constant";
 
@@ -292,7 +292,6 @@ function UploadComponent({
   );
 }
 
-
 export default function InventoryPage() {
   const navigate = (path) => {
     window.location.href = path;
@@ -384,18 +383,31 @@ export default function InventoryPage() {
       setError(err.message);
     }
   };
-
   const handleDelete = async (productId) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
     try {
+      // Get ownerId from localStorage (you'll need to store this when user logs in)
+      const ownerId = localStorage.getItem("ownerId"); // or however you store the owner ID
+      
+      if (!ownerId) {
+        setError('Owner ID not found. Please log in again.');
+        return;
+      }
+  
       const response = await fetch(`${BACKEND_URL}/shop/products/${productId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          ownerId: parseInt(ownerId)
+        })
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete product');
+        throw new Error(errorData.error || 'Failed to delete product');
       }
       
       setProducts(products.filter(p => p.id !== productId));
@@ -404,7 +416,6 @@ export default function InventoryPage() {
       setError(err.message);
     }
   };
-
   const handleAddProduct = async () => {
     if (!addForm.name || !addForm.price || !addForm.quantity) {
       alert('Please fill all fields');

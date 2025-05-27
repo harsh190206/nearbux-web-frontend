@@ -33,8 +33,8 @@ export default function BInfo() {
     }
     
     const value = parseInt(formData.coinValue);
-    if (value > 10 || value < 5) {
-      setError('Value of coin can be only from 5 to 10');
+    if (value > 20 || value < 10) {
+      setError('Value of coin can be only from 10 to 20');
       return 1;
     }
 
@@ -137,7 +137,7 @@ export default function BInfo() {
           
           <div>
             <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1">
-              Tagline (optional)
+              Tagline 
             </label>
             <input
               type="text"
@@ -193,9 +193,9 @@ export default function BInfo() {
               id="coinValue"
               name="coinValue"
               value={formData.coinValue}
-              placeholder="Value must lie between 5 to 10"
-              max={10}
-              min={5}
+              placeholder="Value must lie between 10 to 15"
+              max={20}
+              min={10}
               step={1}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

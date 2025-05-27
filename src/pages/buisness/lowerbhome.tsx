@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Eye, Check, X, Printer, Ban } from "lucide-react";
 import { Navigate, useNavigate } from "react-router";
 import { BACKEND_URL } from "../../config/constant";
+
 export default function Lowerbhome() {
   const [selected, setSelected] = useState("orders");
   const [orders, setOrders] = useState([]);
@@ -95,7 +96,6 @@ export default function Lowerbhome() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-
         },
         body: JSON.stringify({ orderId, status }),
       });
@@ -118,58 +118,58 @@ export default function Lowerbhome() {
     }
   };
 
-  // Handle print bill
-// Handle print bill - Updated version
-const handlePrintBill = (order) => {
-  const billData = {
-    orderId: order.id,
-    customerName: order.consumer.name,
-    customerUsername: order.consumer.username, // Added username
-    items: order.product.map(p => ({
-      name: p.name,
-      price: p.price,
-      quantity: p.quantity,
-      image: p.image, // Ensure image is included
-      total: p.price * p.quantity
-    })),
-    totalAmount: order.product.reduce((sum, p) => sum + (p.price * p.quantity), 0),
-    timestamp: new Date().toISOString()
+  // Handle print bill - Updated version
+  const handlePrintBill = (order) => {
+    const billData = {
+      orderId: order.id,
+      customerName: order.consumer.name,
+      customerUsername: order.consumer.username, // Added username
+      items: order.product.map(p => ({
+        name: p.name,
+        price: p.price,
+        quantity: p.quantity,
+        image: p.image, // Ensure image is included
+        total: p.price * p.quantity
+      })),
+      totalAmount: order.product.reduce((sum, p) => sum + (p.price * p.quantity), 0),
+      timestamp: new Date().toISOString()
+    };
+    
+    setBillingData(prev => [...prev, billData]);
+    
+    // Move to history after billing
+    updateOrderStatus(order.id, "COMPLETED");
+    navigate("/billing", { state: { billData } });
   };
-  
-  setBillingData(prev => [...prev, billData]);
-  
-  // Move to history after billing
-  updateOrderStatus(order.id, "COMPLETED");
-  navigate("/billing", { state: { billData } });
-};
+
   const tabClass = (tab) =>
-    `cursor-pointer px-6 py-3 transition-all font-medium ${
+    `cursor-pointer px-3 sm:px-6 py-3 transition-all font-medium text-sm sm:text-base ${
       selected === tab
         ? "border-b-4 border-yellow-500 text-yellow-600 font-semibold"
         : "text-gray-600 hover:text-yellow-500"
     }`;
 
   const OrderCard = ({ order }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-yellow-600 font-semibold text-sm">
               {order.consumer.name.charAt(0)}
             </span>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-800">{order.consumer.name}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-gray-800 truncate">{order.consumer.name}</h3>
             <p className="text-sm text-gray-500">{getTimeAgo(order.createdAt)}</p>
           </div>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2">
           <button
             onClick={() => setViewingOrder(viewingOrder === order.id ? null : order.id)}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium flex items-center space-x-1 flex-1 sm:flex-none justify-center"
           >
-            <Eye size={16} />
+            <Eye size={14} className="sm:w-4 sm:h-4" />
             <span>View</span>
           </button>
           
@@ -177,16 +177,16 @@ const handlePrintBill = (order) => {
             <>
               <button
                 onClick={() => updateOrderStatus(order.id, "CONFIRMED")}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+                className="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium flex items-center space-x-1 flex-1 sm:flex-none justify-center"
               >
-                <Check size={16} />
+                <Check size={14} className="sm:w-4 sm:h-4" />
                 <span>Accept</span>
               </button>
               <button
                 onClick={() => updateOrderStatus(order.id, "CANCELLED")}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium flex items-center space-x-1 flex-1 sm:flex-none justify-center"
               >
-                <X size={16} />
+                <X size={14} className="sm:w-4 sm:h-4" />
                 <span>Reject</span>
               </button>
             </>
@@ -196,17 +196,19 @@ const handlePrintBill = (order) => {
             <>
               <button
                 onClick={() => handlePrintBill(order)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium flex items-center space-x-1 flex-1 sm:flex-none justify-center"
               >
-                <Printer size={16} />
-                <span>Print Bill</span>
+                <Printer size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Print Bill</span>
+                <span className="xs:hidden">Print</span>
               </button>
               <button
                 onClick={() => updateOrderStatus(order.id, "CANCELLED")}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium flex items-center space-x-1 flex-1 sm:flex-none justify-center"
               >
-                <Ban size={16} />
-                <span>Cancel Order</span>
+                <Ban size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Cancel Order</span>
+                <span className="xs:hidden">Cancel</span>
               </button>
             </>
           )}
@@ -215,30 +217,30 @@ const handlePrintBill = (order) => {
       
       {viewingOrder === order.id && (
         <div className="border-t pt-4">
-          <h4 className="font-medium text-gray-800 mb-3">Order Details:</h4>
-          <div className="grid grid-cols-2 gap-4">
+          <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">Order Details:</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {order.product.map((item, index) => (
               <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-8 h-8 object-cover rounded"
+                    className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded"
                     onError={(e) => {
                       e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiA4QzEyLjY4NjMgOCAxMCAxMC42ODYzIDEwIDE0VjE4QzEwIDIxLjMxMzcgMTIuNjg2MyAyNCAxNiAyNEMxOS4zMTM3IDI0IDIyIDIxLjMxMzcgMjIgMThWMTRDMjIgMTAuNjg2MyAxOS4zMTM3IDggMTYgOFoiIGZpbGw9IiM5Q0E5QjQiLz4KPC9zdmc+";
                     }}
                   />
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{item.name}</p>
-                  <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="text-sm text-green-600 font-medium">₹{item.price}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 text-sm sm:text-base truncate">{item.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Quantity: {item.quantity}</p>
+                  <p className="text-xs sm:text-sm text-green-600 font-medium">₹{item.price}</p>
                 </div>
               </div>
             ))}
           </div>
           <div className="mt-4 text-right">
-            <p className="text-lg font-semibold text-gray-800">
+            <p className="text-base sm:text-lg font-semibold text-gray-800">
               Total: ₹{order.product.reduce((sum, item) => sum + (item.price * item.quantity), 0)}
             </p>
           </div>
@@ -248,15 +250,16 @@ const handlePrintBill = (order) => {
   );
 
   return (
-    <div className="min-h-screen mt-5 rounded-4xl bg-gray-50">
+    <div className="min-h-screen mt-2 sm:mt-5 rounded-t-2xl sm:rounded-4xl bg-gray-50">
       <div className="bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-center space-x-8 border-b">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6">
+          <div className="flex justify-center space-x-2 sm:space-x-8 border-b overflow-x-auto">
             <div onClick={() => setSelected("orders")} className={tabClass("orders")}>
               Orders
             </div>
             <div onClick={() => setSelected("accepted")} className={tabClass("accepted")}>
-              Accepted Orders
+              <span className="hidden sm:inline">Accepted Orders</span>
+              <span className="sm:hidden">Accepted</span>
             </div>
             <div onClick={() => setSelected("history")} className={tabClass("history")}>
               History
@@ -265,11 +268,11 @@ const handlePrintBill = (order) => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading orders...</p>
+          <div className="text-center py-8 sm:py-12">
+            <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600 text-sm sm:text-base">Loading orders...</p>
           </div>
         ) : getFilteredOrders().length > 0 ? (
           <div>
@@ -278,12 +281,12 @@ const handlePrintBill = (order) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Eye className="w-8 h-8 text-gray-400" />
+          <div className="text-center py-8 sm:py-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-600 mb-2">No orders found</h3>
-            <p className="text-gray-500">
+            <h3 className="text-base sm:text-lg font-medium text-gray-600 mb-2">No orders found</h3>
+            <p className="text-gray-500 text-sm sm:text-base px-4">
               {selected === "orders" && "No pending orders at the moment."}
               {selected === "accepted" && "No accepted orders to show."}
               {selected === "history" && "No order history available."}
@@ -294,8 +297,8 @@ const handlePrintBill = (order) => {
 
       {/* Debug: Show billing data */}
       {billingData.length > 0 && (
-        <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg">
-          <p className="text-sm font-medium">Bills Generated: {billingData.length}</p>
+        <div className="fixed bottom-4 right-2 sm:right-4 bg-blue-500 text-white p-2 sm:p-4 rounded-lg shadow-lg">
+          <p className="text-xs sm:text-sm font-medium">Bills Generated: {billingData.length}</p>
         </div>
       )}
     </div>
