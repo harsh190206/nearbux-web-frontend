@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus, Save, X, Package } from 'lucide-react';
+import { Edit2, Trash2, Plus, Upload, Save, X, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from "../../config/constant";
 
@@ -292,10 +292,7 @@ function UploadComponent({
   );
 }
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Package, Upload } from 'lucide-react';
 
-// Main Inventory Page Component
 export default function InventoryPage() {
   const navigate = (path) => {
     window.location.href = path;
@@ -320,12 +317,10 @@ export default function InventoryPage() {
   const shopId = localStorage.getItem("shopId");
   
   if(!shopId){
-    return <div onClick={()=>navigate("/bsignin")} className='h-screen flex items-center justify-center '>
-      <div className=' bg-blue-500 rounded-4xl p-3'>
-      <p>Sign in again
-      </p>
+    return <div onClick={()=>navigate("/bsignin")} className='h-screen flex items-center justify-center px-4'>
+      <div className='bg-blue-500 rounded-xl p-4 text-center'>
+        <p className="text-white">Sign in again</p>
       </div>
-   
     </div>
   }
 
@@ -522,7 +517,7 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading inventory...</p>
@@ -533,9 +528,9 @@ export default function InventoryPage() {
 
   if (showUploadComponent) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <button
               onClick={() => {
                 setShowUploadComponent(null);
@@ -546,7 +541,7 @@ export default function InventoryPage() {
               <X className="w-4 h-4 mr-2" />
               Back to Inventory
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">Upload Product Image</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Upload Product Image</h1>
           </div>
           
           <UploadComponent 
@@ -561,25 +556,27 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-            <p className="text-gray-600 mt-2">Manage your products, prices, and quantities</p>
+        <div className="mb-6 sm:mb-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory Management</h1>
+            <p className="text-gray-600 mt-2 text-sm sm:text-base">Manage your products, prices, and quantities</p>
           </div>
-          <div className="flex gap-3">
+          
+          {/* Mobile-first button layout */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
             <button
               onClick={() => setShowBulkAddForm(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 flex items-center"
+              className="w-full sm:w-auto bg-green-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-green-700 transition duration-200 flex items-center justify-center"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Bulk Add
+              Bulk Add Products
             </button>
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Product
@@ -589,34 +586,34 @@ export default function InventoryPage() {
 
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700 text-sm sm:text-base">{error}</p>
           </div>
         )}
 
         {/* Add Product Form */}
         {showAddForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Add New Product</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Product</h2>
               <button
                 onClick={() => {
                   setShowAddForm(false);
                   setAddForm({ name: '', price: '', quantity: '' });
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                 <input
                   type="text"
                   value={addForm.name}
                   onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter product name"
                 />
               </div>
@@ -626,7 +623,7 @@ export default function InventoryPage() {
                   type="number"
                   value={addForm.price}
                   onChange={(e) => setAddForm({ ...addForm, price: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter price"
                 />
               </div>
@@ -636,7 +633,7 @@ export default function InventoryPage() {
                   type="number"
                   value={addForm.quantity}
                   onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter quantity"
                 />
               </div>
@@ -645,7 +642,7 @@ export default function InventoryPage() {
             <div className="flex justify-end">
               <button
                 onClick={handleAddProduct}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center"
+                className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center justify-center"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Add Product
@@ -656,15 +653,15 @@ export default function InventoryPage() {
 
         {/* Bulk Add Products Form */}
         {showBulkAddForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Bulk Add Products</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Bulk Add Products</h2>
               <button
                 onClick={() => {
                   setShowBulkAddForm(false);
                   setBulkProducts([{ name: '', price: '', quantity: '' }]);
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -672,54 +669,57 @@ export default function InventoryPage() {
             
             <div className="space-y-4 mb-4">
               {bulkProducts.map((product, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                    <input
-                      type="text"
-                      value={product.name}
-                      onChange={(e) => updateBulkProduct(index, 'name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter product name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-                    <input
-                      type="number"
-                      value={product.price}
-                      onChange={(e) => updateBulkProduct(index, 'price', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      value={product.quantity}
-                      onChange={(e) => updateBulkProduct(index, 'quantity', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter quantity"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={() => removeBulkProductRow(index)}
-                      className="w-full bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition duration-200 flex items-center justify-center"
-                      disabled={bulkProducts.length === 1}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="lg:col-span-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                      <input
+                        type="text"
+                        value={product.name}
+                        onChange={(e) => updateBulkProduct(index, 'name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Enter product name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                      <input
+                        type="number"
+                        value={product.price}
+                        onChange={(e) => updateBulkProduct(index, 'price', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Enter price"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        value={product.quantity}
+                        onChange={(e) => updateBulkProduct(index, 'quantity', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Enter quantity"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        onClick={() => removeBulkProductRow(index)}
+                        className="w-full bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition duration-200 flex items-center justify-center"
+                        disabled={bulkProducts.length === 1}
+                      >
+                        <X className="w-4 h-4" />
+                        <span className="ml-1 sm:hidden">Remove</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row justify-between gap-3">
               <button
                 onClick={addBulkProductRow}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
+                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center justify-center"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Row
@@ -727,7 +727,7 @@ export default function InventoryPage() {
               <button
                 onClick={handleBulkAddProducts}
                 disabled={bulkLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center disabled:opacity-50"
+                className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center justify-center disabled:opacity-50"
               >
                 {bulkLoading ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -741,11 +741,11 @@ export default function InventoryPage() {
         )}
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {products.map((product) => (
             <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
               {/* Product Image */}
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
+              <div className="h-40 sm:h-48 bg-gray-200 flex items-center justify-center">
                 {product.image ? (
                   <img 
                     src={product.image} 
@@ -753,9 +753,9 @@ export default function InventoryPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-center">
-                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">No image</p>
+                  <div className="text-center p-4">
+                    <Package className="w-8 sm:w-12 h-8 sm:h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500 text-xs sm:text-sm">No image</p>
                     <button
                       onClick={() => setShowUploadComponent(product.id)}
                       className="text-blue-500 hover:text-blue-700 text-xs underline mt-1"
@@ -768,7 +768,7 @@ export default function InventoryPage() {
 
               {/* Product Details */}
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 truncate">{product.name}</h3>
                 
                 {editingProduct === product.id ? (
                   <div className="space-y-3">
@@ -778,7 +778,7 @@ export default function InventoryPage() {
                         type="number"
                         value={editForm.price}
                         onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       />
                     </div>
                     <div>
@@ -787,13 +787,13 @@ export default function InventoryPage() {
                         type="number"
                         value={editForm.quantity}
                         onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
                         onClick={() => handleSaveEdit(product.id)}
-                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center justify-center"
+                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition duration-200 flex items-center justify-center text-sm"
                       >
                         <Save className="w-4 h-4 mr-1" />
                         Save
@@ -803,7 +803,7 @@ export default function InventoryPage() {
                           setEditingProduct(null);
                           setEditForm({ price: '', quantity: '' });
                         }}
-                        className="flex-1 bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-600 transition duration-200 flex items-center justify-center"
+                        className="flex-1 bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-600 transition duration-200 flex items-center justify-center text-sm"
                       >
                         <X className="w-4 h-4 mr-1" />
                         Cancel
@@ -823,17 +823,17 @@ export default function InventoryPage() {
                       </span>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
                         onClick={() => handleEdit(product)}
-                        className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center justify-center"
+                        className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center justify-center text-sm"
                       >
                         <Edit2 className="w-4 h-4 mr-1" />
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(product.id)}
-                        className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition duration-200 flex items-center justify-center"
+                        className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition duration-200 flex items-center justify-center text-sm"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
@@ -847,21 +847,21 @@ export default function InventoryPage() {
         </div>
 
         {products.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <div className="text-center py-12 px-4">
+            <Package className="w-12 sm:w-16 h-12 sm:h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-            <p className="text-gray-600 mb-4">Start by adding your first product to the inventory</p>
-            <div className="flex justify-center gap-3">
+            <p className="text-gray-600 mb-6 text-sm sm:text-base">Start by adding your first product to the inventory</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3 max-w-md mx-auto">
               <button
                 onClick={() => setShowBulkAddForm(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 inline-flex items-center"
+                className="w-full sm:w-auto bg-green-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-green-700 transition duration-200 inline-flex items-center justify-center"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Bulk Add Products
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 inline-flex items-center"
+                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-blue-700 transition duration-200 inline-flex items-center justify-center"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Single Product
