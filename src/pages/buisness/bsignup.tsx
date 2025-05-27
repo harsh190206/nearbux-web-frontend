@@ -254,7 +254,7 @@ const BSignupPage = () => {
       };
 
       const response = await axios.post(
-        `${BACKEND_URL}3000/shop/signup`,
+        `${BACKEND_URL}/shop/signup`,
         payload,
         {
           headers: {
