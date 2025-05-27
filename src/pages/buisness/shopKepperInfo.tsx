@@ -121,7 +121,7 @@ const ShopInfoPage = () => {
       setTogglingShop(true);
       setError('');
 
-      const response = await fetch(`http://localhost:3000/shop/${shopData.id}/toggle-status`, {
+      const response = await fetch(`${BACKEND_URL}/shop/${shopData.id}/toggle-status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

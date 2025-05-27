@@ -27,7 +27,7 @@ export default function BInfo() {
   };
 
   const beforesubmitcheck = async () => {
-    if (!formData.shopName || !formData.coinValue || !formData.pin || !formData.localArea || !formData.tagline || !formData.opens || !formData.closes) {
+    if (!formData.shopName || !formData.coinValue || !formData.pin || !formData.localArea || !formData.tagline  || !formData.opens || !formData.closes) {
       setError("All fields are mandatory");
       return 1;
     }
@@ -137,7 +137,7 @@ export default function BInfo() {
           
           <div>
             <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1">
-              Tagline
+              Tagline (optional)
             </label>
             <input
               type="text"
