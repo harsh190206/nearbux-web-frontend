@@ -1,6 +1,8 @@
 import './App.css';
 import SignupPage from './pages/Sgnup';
 import { Signin } from './pages/Signin';
+import Terms from './pages/Terms'
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Info from './pages/info';
 import Cust from './pages/customerHome';
 import NoPage from './pages/NoPage';
@@ -10,6 +12,8 @@ import Wallet from './pages/wallet';
 import Layout from './pages/Layout'; // Assuming you have a Layout component
 import Forgotpass from './pages/forgot';
 import BSignupPage from './pages/buisness/bsignup';
+import AboutUs from './pages/aboutus'
+import Faq from "./pages/FAQ"
 import { BSignin } from './pages/buisness/bsignin';
 import BForgotpass from './pages/buisness/bforgot';
 import BInfo from './pages/buisness/binfo';
@@ -22,6 +26,7 @@ import ShopAnalyticsDashboard from "./pages/buisness/analytics"
 import ShopInfoPage from './pages/buisness/shopKepperInfo';
 import NearBuxLanding from './pages/Landingpage';
 import BillingComponent from './pages/buisness/billing';
+import Feedback from './pages/feedback';
 function App() {
   return (
     <BrowserRouter>
@@ -40,14 +45,18 @@ function App() {
         <Route path="customer" element={<Cust />} />
 
         <Route path="newpass" element={<Forgotpass />} />
-
-
+        <Route path="terms" element={<Terms />} />
+        <Route path="faq" element={<Faq />} />
+        <Route path="about" element={<AboutUs />} />
+        <Route path="privacy" element={<PrivacyPolicy />} />
 
         <Route path="bsignup" element={<BSignupPage />} />
         <Route path="bsignin" element={<BSignin />} />
         <Route path="bnewpass" element={<BForgotpass />} />
         <Route path="newpass" element={<Forgotpass />} />
         <Route path="shopinfo" element={<BInfo />} />
+        <Route path="feedback" element={<Feedback />} />
+        
         <Route path="shopimage" element={<ShopImage />} />
         <Route  element={<Blayout/>}>
         <Route  path="bhome" element={<Shop/>} />

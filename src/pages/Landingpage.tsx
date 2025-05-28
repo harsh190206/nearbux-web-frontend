@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, MapPin, Clock, DollarSign, Users, Gift, Shield, CreditCard, Star } from 'lucide-react';
-
+import Footer from './landingpageFooter';
 const NearBuxLanding = () => {
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
@@ -320,29 +320,7 @@ const NearBuxLanding = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <img 
-              src="/nearbux.png" 
-              alt="NearBux Logo" 
-              className="w-8 h-8"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
-              }}
-            />
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{display: 'none'}}>
-              N
-            </div>
-            <span className="text-xl font-semibold">NearBux</span>
-          </div>
-          <p className="text-gray-400">
-            © 2025 NearBux. Supporting local businesses, one purchase at a time.
-          </p>
-        </div>
-      </footer>
-
+  <Footer></Footer>
       {/* Customer Modal */}
       {showCustomerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
