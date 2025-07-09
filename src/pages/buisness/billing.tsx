@@ -10,6 +10,8 @@ const BillingComponent = () => {
   const [shopId, setShopId] = useState(null);
   const [ownerId, setOwnerId] = useState(null);
   const [showBillPreview, setShowBillPreview] = useState(false);
+  const [shopName , setshopName] = useState("shop");
+  const [tagLine , setTagline] = useState("");
 
   // Check authentication and get shop details
   useEffect(() => {
@@ -20,13 +22,37 @@ const BillingComponent = () => {
       window.location.href = '/bsignin';
       return;
     }
-    
+    fetchName(parseInt(storedShopId))
     setShopId(parseInt(storedShopId));
     setOwnerId(parseInt(storedOwnerId));
     fetchProducts(parseInt(storedShopId));
   }, []);
 
   // Fetch products from API
+
+  async function fetchName (shopId){
+    try {
+      const response =  await fetch(`${BACKEND_URL}/shop/shopname`, {
+        method : 'POST',
+        headers: {
+          'Content-Type': 'application/json'   
+        },
+        body : JSON.stringify({
+          shopId : shopId
+
+        })
+      });
+
+      if(response.ok){
+        const data =  await response.json();
+        setshopName(data.message);
+        setTagline(data.tagline);
+      }
+}catch(e){
+  console.error(e.message);
+}
+  }
+
   const fetchProducts = async (shopId) => {
     setLoading(true);
     try {
@@ -185,8 +211,8 @@ const BillingComponent = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Bill</title>
-          ${printStyles}
+        <title>&nbsp;</title>  <!-- blank space title -->
+
           <style>
             body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
             .bill-header { text-align: center; margin-bottom: 20px; }
@@ -204,6 +230,7 @@ const BillingComponent = () => {
               font-weight: bold; 
               text-align: right; 
               margin-top: 20px; 
+              margin-right:20px;
               padding-top: 10px;
               border-top: 2px solid #333;
             }
@@ -213,9 +240,9 @@ const BillingComponent = () => {
         <body>
           <div class="print-area">
             <div class="bill-header">
-              <div class="bill-title">SHOP BILL</div>
-              <div class="bill-info">Date: ${new Date().toLocaleDateString()}</div>
-              <div class="bill-info">Time: ${new Date().toLocaleTimeString()}</div>
+              <div class="bill-title">${shopName}</div>
+               <div class="bill-title">${tagLine}</div>
+
             </div>
             
             <table class="bill-table">
@@ -401,16 +428,21 @@ const BillingComponent = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-lg font-semibold">Bill Preview</h3>
+              <p className="text-sm text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+        <p className="text-sm text-gray-600">Time: {new Date().toLocaleTimeString()}</p>
+      
               <button
                 onClick={() => setShowBillPreview(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="h-5 w-5" />
               </button>
-            </div>
+              </div>
+     
+          
             
             <div className="p-6">
-              <PrintableBill billItems={billItems} totalPrice={totalPrice} />
+              <PrintableBill billItems={billItems} tagLine={tagLine} shopName={shopName} totalPrice={totalPrice} />
             </div>
             
             <div className="flex gap-3 p-6 border-t">
@@ -436,13 +468,14 @@ const BillingComponent = () => {
 };
 
 // Printable Bill Component
-const PrintableBill = ({ billItems, totalPrice }) => {
+const PrintableBill = ({ billItems,shopName, tagLine,  totalPrice }) => {
   return (
     <div className="bg-white">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mb-2">SHOP BILL</h1>
-        <p className="text-sm text-gray-600">Date: {new Date().toLocaleDateString()}</p>
-        <p className="text-sm text-gray-600">Time: {new Date().toLocaleTimeString()}</p>
+        <h1 className="text-2xl font-bold mb-2">{shopName}</h1>
+        <h1 className="text-1xl font-medium mb-2">{tagLine}</h1>
+        
+      
       </div>
       
       <div className="border border-gray-300">

@@ -171,46 +171,82 @@ export default function Shop() {
   const [activePromotionDetails, setActivePromotionDetails] = useState(null); // New state for promotion details
 
   // Get IDs from localStorage and check for active promotion on component mount
-  useEffect(() => {
-    const storedShopId = localStorage.getItem("shopId");
-    const storedOwnerId = localStorage.getItem("ownerId");
+// Get IDs from localStorage and check for active promotion on component mount
+useEffect(() => {
+  const storedShopId = localStorage.getItem("shopId");
+  const storedOwnerId = localStorage.getItem("ownerId");
 
+  if (storedShopId) {
+    setShopId(parseInt(storedShopId));
+  }
+  if (storedOwnerId) {
+    setShopKeeperId(parseInt(storedOwnerId));
+  }
+
+  const checkIfPromotionExists = async () => {
     if (storedShopId) {
-      setShopId(parseInt(storedShopId));
-    }
-    if (storedOwnerId) {
-      setShopKeeperId(parseInt(storedOwnerId));
-    }
+      try {
+        // First, check if a promotion exists for this shop
+        const alreadyResponse = await axios.post(`${BACKEND_URL}/shop/already`, { shopId: storedShopId });
 
-    const checkIfPromotionExists = async () => {
-      if (storedShopId) {
-        try {
-          // First, check if a promotion exists for this shop
-          const alreadyResponse = await axios.post(`${BACKEND_URL}/shop/already`, { shopId: storedShopId });
-
-          if (alreadyResponse.data.message === 1) {
-            setHasActivePromotion(true);
-            // If a promotion exists, fetch its details
-            if(isapi ===1){
-              const promotionDetailsResponse = await axios.get(`${BACKEND_URL}/shop/promotions/${storedShopId}`);
-          
-              setActivePromotionDetails(promotionDetailsResponse.data);
-
-            } else {
-              alert ("not activated yet . try after users page is live ")
-            }
-            
+        if (alreadyResponse.data.message === 1) {
+          setHasActivePromotion(true);
+          // If a promotion exists, fetch its details
+          if (isapi === 1) {
+            const promotionDetailsResponse = await axios.get(`${BACKEND_URL}/shop/promotions/${storedShopId}`);
+            setActivePromotionDetails(promotionDetailsResponse.data);
+          } else {
+            alert("not activated yet . try after users page is live ");
           }
-        } catch (error) {
-          console.error("Error checking for existing promotion or fetching details:", error);
-          // If there's an error fetching details, assume no active promotion or handle accordingly
-          setHasActivePromotion(false);
-          setActivePromotionDetails(null);
         }
+      } catch (error) {
+        console.error("Error checking for existing promotion or fetching details:", error);
+        // If there's an error fetching details, assume no active promotion or handle accordingly
+        setHasActivePromotion(false);
+        setActivePromotionDetails(null);
       }
-    };
-    checkIfPromotionExists();
-  }, []);
+    }
+  };
+  checkIfPromotionExists();
+}, []);
+
+// Separate useEffect for owner validation
+useEffect(() => {
+  const storedownerIds = localStorage.getItem("ownerId");
+  const storedOwnerId = parseInt(storedownerIds);
+
+  console.log("hel"); // This should now appear
+  
+  async function checkaownerValid() {
+    try {
+      console.log("running");
+      const response = await axios.post(`${BACKEND_URL}/shop/own/already`, { storedownerIds : storedOwnerId });
+      
+      // Check if the response indicates the owner is not valid
+      if (!response.data.message) {
+        localStorage.removeItem("ownerId");
+        localStorage.removeItem("shopId");
+        localStorage.removeItem("token");
+        
+        navigate("/bsignin");
+      }
+      console.log(response.data.message);
+
+    } catch (error) {
+      console.error("Error validating owner:", error);
+      // On error, redirect to signin as a safety measure
+      navigate("/bsignin");
+    }
+  }
+  
+  // Only run the check if we have a storedownerId
+  if (storedownerIds) {
+    checkaownerValid();
+  } else {
+    // If no ownerId in localStorage, redirect to signin
+    navigate("/bsignin");
+  }
+}, []);
 
   const handleImageSelect = (file) => {
     setSelectedImage(file);
