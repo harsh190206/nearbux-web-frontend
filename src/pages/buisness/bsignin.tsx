@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from "../../config/constant";
+ import VerificationPending  from "./valid"
 
 export function BSignin() {
   const navigate = useNavigate();
   const [error, setError] = useState<string>('');
+  const [valid , setvalid] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
   const [animateForm, setAnimateForm] = useState<boolean>(false);
@@ -48,7 +50,7 @@ export function BSignin() {
       if (userInput.length === 10) {
         userInput = '+91' + userInput;
       }
-
+  
       const response = await axios.post(`${BACKEND_URL}/shop/signin`, { userInput, password });
       if (response.status === 500) {
         throw new Error(response.data.message);
@@ -58,8 +60,20 @@ export function BSignin() {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("shopId", response.data.shopId);
         localStorage.setItem("ownerId", response.data.ownerId)  ;
-        
-        navigate('/bhome');
+            const validateByADmin = await axios.post(`${BACKEND_URL}/shop/isverified`,{ownerId : response.data.ownerId});
+            if(validateByADmin.data.verified){
+               navigate('/bhome');
+
+            }
+            else{
+              setvalid(true);
+
+            }
+
+
+
+
+       
       }
     } catch (e: any) {
       const message = e.response?.data?.message || "Error during signin";
@@ -68,6 +82,12 @@ export function BSignin() {
       setLoading(false);
     }
   };
+  if(valid){
+   return <div>
+ <VerificationPending/>
+
+   </div>
+  }
 
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
