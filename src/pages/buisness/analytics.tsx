@@ -2,13 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Package, Coins, ShoppingCart, Calendar, Star } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import axios from 'axios'
 import { BACKEND_URL } from "../../config/constant";
 const ShopAnalyticsDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+useEffect(()=>{
+  async function ankush (){
+    const ownerId  = localStorage.getItem("ownerId");
+   const validateByADmin = await axios.post(`${BACKEND_URL}/shop/isverified`,{ownerId });
+            if(validateByADmin.data.message){
+              console.log("valid");
+            }
+            else{
+              console.log("false")  ;
+              
+                navigate('/bsignin');
 
+            }
+          }
+          ankush();
+
+
+},[]);
   useEffect(() => {
     fetchAnalytics();
   }, []);

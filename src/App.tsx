@@ -27,6 +27,7 @@ import ShopInfoPage from './pages/buisness/shopKepperInfo';
 import NearBuxLanding from './pages/Landingpage';
 import BillingComponent from './pages/buisness/billing';
 import Feedback from './pages/feedback';
+import OfferManagement from './pages/buisness/offer'
 function App() {
   return (
     <BrowserRouter>
@@ -68,7 +69,7 @@ function App() {
         <Route path="profilePage" element={<ProfilePage  />} />
         <Route path = "bprofile" element = {<ShopInfoPage/>} />
         <Route path = "billing" element = {<BillingComponent/>} />
-
+        <Route path = "offers" element = {<OfferManagement/>} />
 
         </Route>
 

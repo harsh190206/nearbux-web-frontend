@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Link, Outlet } from "react-router-dom";
 import { FiBarChart2, FiMenu, FiX } from "react-icons/fi";
 import { RiBillLine } from "react-icons/ri";
-import { FaHome, FaShoppingCart, FaWallet, FaUserCircle, FaStore } from "react-icons/fa";
+import { FaHome, FaShoppingCart, FaWallet, FaUserCircle, FaStore, FaGift } from "react-icons/fa";
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -64,13 +64,17 @@ export default function Layout() {
               <FaShoppingCart className="text-base lg:text-lg" />
               <span>Inventory</span>
             </Link>
+            <Link to="/billing" className={getLinkClasses("/billing")}>
+              <RiBillLine className="text-base lg:text-lg" />
+              <span>Billing</span>
+            </Link>
             <Link to="/analytics" className={getLinkClasses("/analytics")}>
               <FiBarChart2 className="text-base lg:text-lg" />
               <span>Analytics</span>
             </Link>
-            <Link to="/billing" className={getLinkClasses("/billing")}>
-              <RiBillLine className="text-base lg:text-lg" />
-              <span>Billing</span>
+            <Link to="/offers" className={getLinkClasses("/offers")}>
+              <FaGift className="text-base lg:text-lg" />
+              <span>Offers</span>
             </Link>
             <Link to="/bprofile" className={`${getLinkClasses("/bprofile")} !space-x-0`}>
               <FaUserCircle className="text-xl lg:text-2xl" />
@@ -108,6 +112,14 @@ export default function Layout() {
                 <span>Inventory</span>
               </Link>
               <Link 
+                to="/billing" 
+                className={getLinkClasses("/billing", true)}
+                onClick={closeMobileMenu}
+              >
+                <RiBillLine className="text-lg" />
+                <span>Billing</span>
+              </Link>
+              <Link 
                 to="/analytics" 
                 className={getLinkClasses("/analytics", true)}
                 onClick={closeMobileMenu}
@@ -116,12 +128,12 @@ export default function Layout() {
                 <span>Analytics</span>
               </Link>
               <Link 
-                to="/billing" 
-                className={getLinkClasses("/billing", true)}
+                to="/offers" 
+                className={getLinkClasses("/offers", true)}
                 onClick={closeMobileMenu}
               >
-                <RiBillLine className="text-lg" />
-                <span>Billing</span>
+                <FaGift className="text-lg" />
+                <span>Offers</span>
               </Link>
               <Link 
                 to="/bprofile" 

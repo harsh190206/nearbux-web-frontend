@@ -155,7 +155,7 @@ function UploadComponent({
   );
 }
 
-// --- Shop Component ---
+// --- Shop Component --- 
 export default function Shop() {
   const [isapi , setApi] = useState(0);
   const navigate = useNavigate();
@@ -210,6 +210,24 @@ useEffect(() => {
   checkIfPromotionExists();
 }, []);
 
+useEffect(()=>{
+  async function ankush (){
+    const ownerId  = localStorage.getItem("ownerId");
+   const validateByADmin = await axios.post(`${BACKEND_URL}/shop/isverified`,{ownerId });
+            if(validateByADmin.data.message){
+              console.log("valid");
+            }
+            else{
+              console.log("false")  ;
+              
+                navigate('/bsignin');
+
+            }
+          }
+          ankush();
+
+
+},[]);
 // Separate useEffect for owner validation
 useEffect(() => {
   const storedownerIds = localStorage.getItem("ownerId");

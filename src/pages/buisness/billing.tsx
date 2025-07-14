@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Minus, ShoppingCart, Printer, Database, X, Package } from 'lucide-react';
 import { BACKEND_URL } from "../../config/constant";
+import axios from 'axios';
 
+import { useNavigate } from 'react-router';
 const BillingComponent = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [billItems, setBillItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +16,24 @@ const BillingComponent = () => {
   const [shopName , setshopName] = useState("shop");
   const [tagLine , setTagline] = useState("");
 
+  useEffect(()=>{
+    async function ankush (){
+      const ownerId  = localStorage.getItem("ownerId");
+     const validateByADmin = await axios.post(`${BACKEND_URL}/shop/isverified`,{ownerId });
+              if(validateByADmin.data.message){
+                console.log("valid");
+              }
+              else{
+                console.log("false")  ;
+                
+                  navigate('/bsignin');
+  
+              }
+            }
+            ankush();
+  
+  
+  },[]);
   // Check authentication and get shop details
   useEffect(() => {
     const storedShopId = localStorage.getItem('shopId');

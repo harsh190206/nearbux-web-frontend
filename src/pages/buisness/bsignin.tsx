@@ -61,11 +61,13 @@ export function BSignin() {
         localStorage.setItem("shopId", response.data.shopId);
         localStorage.setItem("ownerId", response.data.ownerId)  ;
             const validateByADmin = await axios.post(`${BACKEND_URL}/shop/isverified`,{ownerId : response.data.ownerId});
-            if(validateByADmin.data.verified){
+            if(validateByADmin.data.message){
                navigate('/bhome');
+               console.log("lk");
 
             }
             else{
+              console.log("not valid");
               setvalid(true);
 
             }
