@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Minus, ShoppingCart, Printer, Database, X, Package } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { Search, Plus, Minus, ShoppingCart, Printer, Database, X, Package, User, UserPlus } from 'lucide-react';
 import { BACKEND_URL } from "../../config/constant";
 import axios from 'axios';
 
@@ -8,6 +8,7 @@ const BillingComponent = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [billItems, setBillItems] = useState([]);
+  const [offer  , setOffer]  = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [shopId, setShopId] = useState(null);
@@ -15,7 +16,38 @@ const BillingComponent = () => {
   const [showBillPreview, setShowBillPreview] = useState(false);
   const [shopName , setshopName] = useState("shop");
   const [tagLine , setTagline] = useState("");
+  const[message , setMessage] = useState("");
+  const [appliedOffer , setApplied] = useState(); // stores the final offer to be applied 
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    phone: '',
+    address: ''
+  });
+  useEffect(()=>{
 
+  // Calculate total price
+  const totalPrice = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
+   let eligible =[];
+   let n = offer.length;
+   for(let  i =0; i<n; i++){
+    if(totalPrice >= offer[i].minimum_amount ){
+      eligible.push(offer[i]);
+
+
+    }
+   }
+   n = eligible.length;
+   let minimum = -1;
+   let temp;
+   for(let i = 0; i<n; i++){
+    if(minimum <= eligible[i].minimum_amount){
+      minimum = eligible[i].minimum_amount
+      temp = eligible[i];
+    }
+   }
+   setApplied(temp) ;
+  },[billItems,offer])
+// check localstorage and navigate;
   useEffect(()=>{
     async function ankush (){
       const ownerId  = localStorage.getItem("ownerId");
@@ -23,8 +55,8 @@ const BillingComponent = () => {
               if(validateByADmin.data.message){
                 console.log("valid");
               }
-              else{
-                console.log("false")  ;
+              else{ 
+                console.log("false");
                 
                   navigate('/bsignin');
   
@@ -49,7 +81,7 @@ const BillingComponent = () => {
     fetchProducts(parseInt(storedShopId));
   }, []);
 
-  // Fetch products from API
+  //  fetch shop name and tagline from API
 
   async function fetchName (shopId){
     try {
@@ -73,13 +105,15 @@ const BillingComponent = () => {
   console.error(e.message);
 }
   }
-
+ // fetcch products
   const fetchProducts = async (shopId) => {
     setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/shop/${shopId}/products`);
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
+        
         setProducts(data);
       } else {
         console.error('Failed to fetch products');
@@ -90,6 +124,75 @@ const BillingComponent = () => {
       setLoading(false);
     }
   };
+
+  // Handle customer info changes
+  const handleCustomerInfoChange = (field, value) => {
+    setCustomerInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
+   
+   
+
+    if(field == "phone" && value.length == 10 ){
+      callbackend(value);
+
+    }
+  };
+  // check for useispresent and then  for offers 
+  async   function callbackend(phone){
+    if(!phone || phone.length!= 10){
+      return;
+    }
+      let   isphonePrsent = 0;
+    try {
+      const response  =  await axios.get(`${BACKEND_URL}/shop/${phone}/present`);
+      if(response.data.message ==1){
+        isphonePrsent = 1;
+
+      }
+      else {
+        setMessage("number not registered on nearbux.com");
+      }
+ 
+    }catch(e){
+      console.error("error occured while getting nearbux user phone status");
+    }
+    if(isphonePrsent == 1){
+         const shopId = localStorage.getItem("shopId");
+         try {
+             const response = await axios.get(`${BACKEND_URL}/shop/${shopId}/offers`);
+             console.log(response);
+            let offers = response.data;
+             if (!Array.isArray(offers)) {
+            console.error("Expected 'message' to be an array of offers, got:", offers);
+             return;
+             }
+
+           setOffer(offers);
+  
+
+
+
+         }catch(e){
+          console.error("error while getting offers" + e);
+         }
+
+
+    }
+
+    
+  }
+
+  // Clear customer info
+  const clearCustomerInfo = () => {
+    setCustomerInfo({
+      name: '',
+      phone: '',
+      address: ''
+    });
+  };
+
 
   // Filter products based on search term
   const filteredProducts = products.filter(product =>
@@ -130,11 +233,33 @@ const BillingComponent = () => {
     }
   };
 
-  // Calculate total price
-  const totalPrice = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
+// Calculate total price
+const totalPrice = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
 
+// Calculate final price after offer
+let finalPrice = totalPrice;
+if (appliedOffer) {
+  // @ts-ignore
+  if (appliedOffer.type === "money") {
+    // @ts-ignore
+    finalPrice = totalPrice - (appliedOffer.fixed || 0);
+  }
+// @ts-ignore
+  if(appliedOffer?.type =="percentage"){
+    //@ts-ignore
+    let temp =( totalPrice * appliedOffer.percentage)/100;
+    finalPrice = totalPrice - temp;
+
+  }
+}
   // Update database (reduce product quantities)
   const updateDatabase = async () => {
+    // Validate mandatory fields
+    if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !=10) {
+      alert('Please fill in customer name and phone number');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/shop/${shopId}/update-inventory`, {
@@ -156,6 +281,7 @@ const BillingComponent = () => {
         // Refresh products
         fetchProducts(shopId);
         setBillItems([]);
+        clearCustomerInfo();
       } else {
         alert('Failed to update database');
       }
@@ -171,6 +297,12 @@ const BillingComponent = () => {
   const printBill = async () => {
     if (billItems.length === 0) {
       alert('No items in bill to print');
+      return;
+    }
+
+    // Validate mandatory fields
+    if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !=10) {
+      alert('Please fill in customer name and phone number');
       return;
     }
 
@@ -202,7 +334,7 @@ const BillingComponent = () => {
       alert('Error processing bill');
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   const handlePrint = () => {
@@ -239,6 +371,8 @@ const BillingComponent = () => {
             .bill-header { text-align: center; margin-bottom: 20px; }
             .bill-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
             .bill-info { font-size: 14px; color: #666; margin-bottom: 5px; }
+            .customer-info { margin-bottom: 20px; font-size: 14px; }
+            .customer-info p { margin: 5px 0; }
             .bill-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
             .bill-table th, .bill-table td { 
               padding: 8px; 
@@ -263,8 +397,16 @@ const BillingComponent = () => {
             <div class="bill-header">
               <div class="bill-title">${shopName}</div>
                <div class="bill-title">${tagLine}</div>
-
             </div>
+            
+            ${customerInfo.name || customerInfo.phone || customerInfo.address ? `
+              <div class="customer-info">
+                <h3 style="margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Customer Information</h3>
+                ${customerInfo.name ? `<p><strong>Name:</strong> ${customerInfo.name}</p>` : ''}
+                ${customerInfo.phone ? `<p><strong>Phone:</strong> ${customerInfo.phone}</p>` : ''}
+                ${customerInfo.address ? `<p><strong>Address:</strong> ${customerInfo.address}</p>` : ''}
+              </div>
+            ` : ''}
             
             <table class="bill-table">
               <thead>
@@ -287,9 +429,11 @@ const BillingComponent = () => {
               </tbody>
             </table>
             
-            <div class="bill-total">
-              TOTAL: ₹${totalPrice}
-            </div>
+          <div class="bill-total">
+  TOTAL: ₹${totalPrice}
+  ${finalPrice !== totalPrice ? `<div class="text-lg font-semibold">Final: ₹${finalPrice}</div>` : ''}
+</div>
+
             
             <div class="bill-footer">
               <p>Thank you for your business!</p>
@@ -310,6 +454,7 @@ const BillingComponent = () => {
       // Clear bill and refresh products after successful print
       fetchProducts(shopId);
       setBillItems([]);
+      clearCustomerInfo();
       setShowBillPreview(false);
     }, 500);
   };
@@ -320,7 +465,81 @@ const BillingComponent = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Products Section */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Customer Information Section */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Customer Info
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input
+                type="text"
+                placeholder="Name *"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                value={customerInfo.name}
+                onChange={(e) => handleCustomerInfoChange('name', e.target.value)}
+                required
+              />
+              
+              <input
+              type="tel"   
+                placeholder="Phone *"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                value={customerInfo.phone}
+                 maxLength={10}
+                //  type = "number"
+                 pattern="[0-9]*" 
+ onKeyDown={(e) => {
+    // Allow: backspace, delete, tab, escape, enter
+    if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        (e.keyCode === 65 && e.ctrlKey === true) ||
+        (e.keyCode === 67 && e.ctrlKey === true) ||
+        (e.keyCode === 86 && e.ctrlKey === true) ||
+        (e.keyCode === 88 && e.ctrlKey === true)) {
+      return;
+    }
+    // Ensure that it's a number and stop the keypress
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault();
+    }
+     }}                onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
+                required
+              />
+              
+              <input
+                type="text"
+                placeholder="Address (Optional)"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                value={customerInfo.address}
+                onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2 mt-3">
+              {/* <button
+                onClick={saveCustomerDetails}
+                disabled={loading || !customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !=10}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                check for offer 
+              </button>
+               */}
+              {(customerInfo.name || customerInfo.phone || customerInfo.address) && (
+                <button
+                  onClick={clearCustomerInfo}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600 flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Products</h2>
             
@@ -415,6 +634,9 @@ const BillingComponent = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold">Total: ₹{totalPrice}</span>
+                    {finalPrice !== totalPrice && (
+                      <span className="text-lg font-semibold">Final: ₹{finalPrice}</span>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -435,6 +657,9 @@ const BillingComponent = () => {
                       <Printer className="h-4 w-4" />
                       Print Bill
                     </button>
+              
+                  
+
                   </div>
                 </div>
               </>
@@ -449,21 +674,27 @@ const BillingComponent = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-lg font-semibold">Bill Preview</h3>
-              <p className="text-sm text-gray-600">Date: {new Date().toLocaleDateString()}</p>
-        <p className="text-sm text-gray-600">Time: {new Date().toLocaleTimeString()}</p>
-      
-              <button
-                onClick={() => setShowBillPreview(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+                <p className="text-sm text-gray-600">Time: {new Date().toLocaleTimeString()}</p>
+                <button
+                  onClick={() => setShowBillPreview(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-     
-          
+            </div>
             
             <div className="p-6">
-              <PrintableBill billItems={billItems} tagLine={tagLine} shopName={shopName} totalPrice={totalPrice} />
+              <PrintableBill 
+                billItems={billItems} 
+                tagLine={tagLine} 
+                shopName={shopName} 
+                totalPrice={totalPrice}
+                finalPrice = {finalPrice}
+                customerInfo={customerInfo}
+              />
             </div>
             
             <div className="flex gap-3 p-6 border-t">
@@ -489,15 +720,32 @@ const BillingComponent = () => {
 };
 
 // Printable Bill Component
-const PrintableBill = ({ billItems,shopName, tagLine,  totalPrice }) => {
+const PrintableBill = ({ billItems, finalPrice ,shopName, tagLine, totalPrice, customerInfo }) => {
+  const hasCustomerInfo = customerInfo.name || customerInfo.phone || customerInfo.address;
+  
   return (
     <div className="bg-white">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mb-2">{shopName}</h1>
         <h1 className="text-1xl font-medium mb-2">{tagLine}</h1>
-        
-      
       </div>
+      
+      {hasCustomerInfo && (
+        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+          <h3 className="font-semibold text-lg mb-3 border-b border-gray-300 pb-2">Customer Information</h3>
+          <div className="space-y-2">
+            {customerInfo.name && (
+              <p className="text-sm"><span className="font-medium">Name:</span> {customerInfo.name}</p>
+            )}
+            {customerInfo.phone && (
+              <p className="text-sm"><span className="font-medium">Phone:</span> {customerInfo.phone}</p>
+            )}
+            {customerInfo.address && (
+              <p className="text-sm"><span className="font-medium">Address:</span> {customerInfo.address}</p>
+            )}
+          </div>
+        </div>
+      )}
       
       <div className="border border-gray-300">
         <div className="grid grid-cols-4 gap-4 p-3 bg-gray-100 font-semibold border-b">
@@ -518,10 +766,14 @@ const PrintableBill = ({ billItems,shopName, tagLine,  totalPrice }) => {
       </div>
       
       <div className="flex justify-end mt-4 p-3 border-t-2 border-gray-800">
-        <span className="text-xl font-bold">TOTAL: ₹{totalPrice}</span>
+        <span className="text-lg font-semibold">TOTAL: ₹{totalPrice}</span>
+         {finalPrice !== totalPrice && (
+                      <span className="text-xl pl-3 font-bold">Final: ₹{ finalPrice}</span>
+                    )}
       </div>
       
       <div className="text-center mt-6 text-gray-600">
+        <br />
         <p>Thank you for your business!</p>
       </div>
     </div>
