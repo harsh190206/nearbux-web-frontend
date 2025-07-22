@@ -26,6 +26,38 @@ const BillingComponent = () => {
     phone: '',
     address: ''
   });
+  const closeBillPreview = () => {
+  setShowBillPreview(false);
+  // Clean up any temporary data
+  delete window.finalBillItemsForPrint;
+};
+  // Add this useEffect to handle coin checking
+useEffect(() => {
+  async function checkCoin() {
+    //@ts-ignore
+    if (appliedOffer?.type === "product" && customerInfo.phone.length === 10) {
+      try {
+        const response = await axios.get(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`);
+        const par = response.data.message;
+        //@ts-ignore
+        if (par > appliedOffer.coinValue) {
+          setenoughCoins(1);
+          //@ts-ignore
+          const updatedCoins = par - appliedOffer.coinValue;
+          updatedCoin.current = updatedCoins;
+        } else {
+          setenoughCoins(0);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+//@ts-ignore
+  if (appliedOffer?.type === "product" && customerInfo.phone.length === 10) {
+    checkCoin();
+  }
+}, [appliedOffer, customerInfo.phone]); // Only run when these change
   useEffect(()=>{
 
   // Calculate total price
@@ -128,65 +160,63 @@ const BillingComponent = () => {
     }
   };
 
-  // Handle customer info changes
-  const handleCustomerInfoChange = (field, value) => {
-    setCustomerInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
-   
-   
+const handleCustomerInfoChange = (field, value) => {
+  setCustomerInfo(prev => ({
+    ...prev,
+    [field]: value
+  }));
 
-    if(field == "phone" && value.length == 10 ){
-      callbackend(value);
-
-    }
-  };
+  // Only call backend when phone field has exactly 10 digits and is different from previous
+  if (field === "phone" && value.length === 10 && value !== customerInfo.phone) {
+    callbackend(value);
+  }
+};
   // check for useispresent and then  for offers 
-  async   function callbackend(phone){
-    if(!phone || phone.length!= 10){
-      return;
-    }
-      let   isphonePrsent = 0;
-    try {
-      const response  =  await axios.get(`${BACKEND_URL}/shop/${phone}/present`);
-      if(response.data.message ==1){
-        isphonePrsent = 1;
+ // Add this ref at the top with other useRef declarations
+const debounceTimer = useRef(null);
 
-      }
-      else {
-        setMessage("number not registered on nearbux.com");
-      }
- 
-    }catch(e){
-      console.error("error occured while getting nearbux user phone status");
-    }
-    if(isphonePrsent == 1){
-         const shopId = localStorage.getItem("shopId");
-         try {
-             const response = await axios.get(`${BACKEND_URL}/shop/${shopId}/offers`);
-             console.log(response);
-            let offers = response.data;
-             if (!Array.isArray(offers)) {
-            console.error("Expected 'message' to be an array of offers, got:", offers);
-             return;
-             }
-
-           setOffer(offers);
-  
-
-
-
-         }catch(e){
-          console.error("error while getting offers" + e);
-         }
-
-
-    }
-
-    
+// Replace your callbackend function with this debounced version
+async function callbackend(phone) {
+  if (!phone || phone.length !== 10) {
+    return;
   }
 
+  // Clear previous timer
+  if (debounceTimer.current) {
+    clearTimeout(debounceTimer.current);
+  }
+
+  // Set new timer
+  debounceTimer.current = setTimeout(async () => {
+    let isphonePrsent = 0;
+    try {
+      const response = await axios.get(`${BACKEND_URL}/shop/${phone}/present`);
+      if (response.data.message == 1) {
+        isphonePrsent = 1;
+      } else {
+        setMessage("number not registered on nearbux.com");
+      }
+    } catch (e) {
+      console.error("error occured while getting nearbux user phone status");
+    }
+
+    if (isphonePrsent == 1) {
+      const shopId = localStorage.getItem("shopId");
+      try {
+        const response = await axios.get(`${BACKEND_URL}/shop/${shopId}/offers`);
+        console.log(response);
+        let offers = response.data;
+        if (!Array.isArray(offers)) {
+          console.error("Expected 'message' to be an array of offers, got:", offers);
+          return;
+        }
+        setOffer(offers);
+      } catch (e) {
+        console.error("error while getting offers" + e);
+      }
+    }
+  }, 500); // 500ms delay
+}
   // Clear customer info
   const clearCustomerInfo = () => {
     setCustomerInfo({
@@ -202,39 +232,52 @@ const BillingComponent = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Add product to bill
   const addToBill = (product) => {
-    const existingItem = billItems.find(item => item.id === product.id);
-    
-    if (existingItem) {
-      if (existingItem.billQuantity < product.quantity) {
-        setBillItems(billItems.map(item =>
-          item.id === product.id
-            ? { ...item, billQuantity: item.billQuantity + 1 }
-            : item
-        ));
-      }
-    } else {
-      if (product.quantity > 0) {
-        setBillItems([...billItems, { ...product, billQuantity: 1 }]);
-      }
+  // Prevent adding items marked as free
+  if (product.isFreeItem) {
+    return;
+  }
+  
+  const existingItem = billItems.find(item => item.id === product.id);
+  
+  if (existingItem) {
+    // Don't increase quantity if it's a free item
+    if (existingItem.isFreeItem) {
+      return;
     }
-  };
-
-  // Remove product from bill
-  const removeFromBill = (productId) => {
-    const existingItem = billItems.find(item => item.id === productId);
     
-    if (existingItem && existingItem.billQuantity > 1) {
+    if (existingItem.billQuantity < product.quantity) {
       setBillItems(billItems.map(item =>
-        item.id === productId
-          ? { ...item, billQuantity: item.billQuantity - 1 }
+        item.id === product.id
+          ? { ...item, billQuantity: item.billQuantity + 1 }
           : item
       ));
-    } else {
-      setBillItems(billItems.filter(item => item.id !== productId));
     }
-  };
+  } else {
+    if (product.quantity > 0) {
+      setBillItems([...billItems, { ...product, billQuantity: 1 }]);
+    }
+  }
+};
+  // Remove product from bill
+const removeFromBill = (productId) => {
+  const existingItem = billItems.find(item => item.id === productId);
+  
+  // Don't allow removal of free items through normal bill operations
+  if (existingItem && existingItem.isFreeItem) {
+    return;
+  }
+  
+  if (existingItem && existingItem.billQuantity > 1) {
+    setBillItems(billItems.map(item =>
+      item.id === productId
+        ? { ...item, billQuantity: item.billQuantity - 1 }
+        : item
+    ));
+  } else {
+    setBillItems(billItems.filter(item => item.id !== productId));
+  }
+};
 
 // Calculate total price
 const totalPrice = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
@@ -257,70 +300,83 @@ if (appliedOffer) {
 // if we have to remove huhu
   //@ts-ignore   
 
-  //@ts-ignore
-if(appliedOffer.type =="product" && customerInfo.phone.length == 10){
-  async function checkCoin (){
-    try {
-    const response =  await axios.get(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`);
-    const par = response.data.message;
-    //@ts-ignore
-    if(par>appliedOffer.coinValue){
-      setenoughCoins(1);
-      //@ts-ignore
-      const updatedCoins = par - appliedOffer.coinValue
-      updatedCoin.current = updatedCoins;
+//   //@ts-ignore
+// if(appliedOffer.type =="product" && customerInfo.phone.length == 10){
+//   async function checkCoin (){
+//     try {
+//     const response =  await axios.get(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`);
+//     const par = response.data.message;
+//     //@ts-ignore
+//     if(par>appliedOffer.coinValue){
+//       setenoughCoins(1);
+//       //@ts-ignore
+//       const updatedCoins = par - appliedOffer.coinValue
+//       updatedCoin.current = updatedCoins;
 
-//@ts-ignore
+// //@ts-ignore
     
 
 
-    }
+//     }
     
-  }catch(e){
-    console.error(e);
-  }
+//   }catch(e){
+//     console.error(e);
+//   }
 
-  }
-  checkCoin();
+//   }
+//   checkCoin();
   
 
-}
+// }
 
 }
 
 async function updateDatabase() {
-  let updatedBillItems = [...billItems]; // Work with a copy
+  // Validate mandatory fields first
+  if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !== 10) {
+    alert('Please fill in customer name and phone number (10 digits)');
+    return;
+  }
+
+  if (billItems.length === 0) {
+    alert('No items in bill to update');
+    return;
+  }
+
+  let updatedBillItems = [...billItems];
 
   // Apply offer if conditions are met
+  
   //@ts-ignore
   if (enoughCoins === 1 && appliedOffer?.type === "product" && appliedOffer.products) {
-    //@ts-ignore
-
+  
+  //@ts-ignore
     const productId = appliedOffer.products.id;
     const existingItemIndex = updatedBillItems.findIndex(item => item.id === productId);
     
     if (existingItemIndex !== -1) {
-      // Increase quantity by 1 for existing item
       updatedBillItems[existingItemIndex] = {
         ...updatedBillItems[existingItemIndex],
         billQuantity: updatedBillItems[existingItemIndex].billQuantity + 1
       };
     } else {
-      // Add new product with quantity 1
       updatedBillItems.push({
-        //@ts-ignore
+
+  //@ts-ignore
         ...appliedOffer.products,
         billQuantity: 1,
-             //@ts-ignore
+
+  //@ts-ignore
         price: appliedOffer.products.price,
-             //@ts-ignore
+
+  //@ts-ignore
         id: appliedOffer.products.id,
-             //@ts-ignore
+
+  //@ts-ignore
         name: appliedOffer.products.name
       });
     }
     
-    // Update the state with the new items
     setBillItems(updatedBillItems);
   }
 
@@ -335,27 +391,51 @@ async function updateDatabase() {
       body: JSON.stringify({
         items: updatedBillItems.map(item => ({
           productId: item.id,
-          quantity: item.billQuantity // Use the updated bill items
+          quantity: item.billQuantity
         })),
         ownerId: ownerId
       }),
     });
 
     if (response.ok) {
-      try {
-        console.log(updatedCoin);
-        console.log("current" + updatedCoin.current); 
-        const resp = await axios.post(`${BACKEND_URL}/shop/updatecoinss`,{phone : customerInfo.phone,updatedCoin : updatedCoin.current });
-      console.log(resp);
- 
-      }catch(e){
-        console.log(e);
+      // Only update coins if there's a valid phone and coin value
+      if (customerInfo.phone.length === 10 && updatedCoin.current !== null) {
+        try {
+          const resp = await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
+            phone: customerInfo.phone,
+            updatedCoin: updatedCoin.current
+          });
+          console.log(resp);
+        } catch (e) {
+          console.log(e);
+        }
       }
 
       alert('Database updated successfully!');
-      fetchProducts(shopId);
+      
+      // Efficiently update products in state by deducting sold quantities
+      setProducts(prevProducts => 
+        prevProducts.map(product => {
+          const soldItem = updatedBillItems.find(item => item.id === product.id);
+          if (soldItem) {
+            return {
+              ...product,
+              quantity: Math.max(0, product.quantity - soldItem.billQuantity) // Ensure quantity doesn't go negative
+            };
+          }
+          return product;
+        })
+      );
+      
+      // Reset all states
       setBillItems([]);
       clearCustomerInfo();
+      setOffer([]);
+      setenoughCoins(0);
+      setMessage("");
+      updatedCoin.current = null;
+      setApplied(undefined);
+      
     } else {
       alert('Failed to update database');
     }
@@ -366,173 +446,262 @@ async function updateDatabase() {
     setLoading(false);
   }
 }
+const printBill = async () => {
+  // Validate mandatory fields
+  if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !== 10) {
+    alert('Please fill in customer name and phone number (10 digits)');
+    return;
+  }
 
-  // Print bill (with database update)
-  const printBill = async () => {
-    if (billItems.length === 0) {
-      alert('No items in bill to print');
-      return;
-    }
+  if (billItems.length === 0) {
+    alert('No items in bill to print');
+    return;
+  }
 
-    // Validate mandatory fields
-    if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !=10) {
-      alert('Please fill in customer name and phone number');
-      return;
-    }
+  setLoading(true);
+  try {
+    // Create final bill items without modifying state yet
+    let finalBillItems = [...billItems];
 
-    setLoading(true);
-    try {
-      // First update the database
-      const response = await fetch(`${BACKEND_URL}/shop/${shopId}/update-inventory`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: billItems.map(item => ({
-            productId: item.id,
-            quantity: item.billQuantity
-          })),
-          ownerId: ownerId
-        }),
-      });
-
-      if (response.ok) {
-        // Show print preview
-        setShowBillPreview(true);
+    // Apply offer product if conditions are met - but don't add to state yet
+    let freeProductAdded = false;
+    //@ts-ignore
+    if (enoughCoins === 1 && appliedOffer?.type === "product" && appliedOffer.products) {
+      //@ts-ignore
+      const productId = appliedOffer.products.id;
+      const existingItemIndex = finalBillItems.findIndex(item => item.id === productId);
+      
+      if (existingItemIndex !== -1) {
+        finalBillItems[existingItemIndex] = {
+          ...finalBillItems[existingItemIndex],
+          billQuantity: finalBillItems[existingItemIndex].billQuantity + 1
+        };
       } else {
-        alert('Failed to update database. Cannot print bill.');
+        finalBillItems.push({
+          //@ts-ignore
+          ...appliedOffer.products,
+          billQuantity: 1,
+          //@ts-ignore
+          price: appliedOffer.products.price,
+          //@ts-ignore
+          id: appliedOffer.products.id,
+          //@ts-ignore
+          name: appliedOffer.products.name,
+          isFreeItem: true // Mark as free item
+        });
       }
-    } catch (error) {
-      console.error('Error processing bill:', error);
-      alert('Error processing bill');
-    } finally {
-      setLoading(false);
-    } 
-  };
+      freeProductAdded = true;
+    }
 
-  const handlePrint = () => {
-    // Add print styles to head
-    const printStyles = `
-      <style>
-        @media print {
-          * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            background: white;
-            padding: 20px;
-          }
-          body { margin: 0; }
-          .no-print { display: none !important; }
+    // Update database first
+    const response = await fetch(`${BACKEND_URL}/shop/${shopId}/update-inventory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: finalBillItems.map(item => ({
+          productId: item.id,
+          quantity: item.billQuantity
+        })),
+        ownerId: ownerId
+      }),
+    });
+
+    if (response.ok) {
+      // Update coins if applicable
+      if (customerInfo.phone.length === 10 && updatedCoin.current !== null) {
+        try {
+          await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
+            phone: customerInfo.phone,
+            updatedCoin: updatedCoin.current
+          });
+        } catch (e) {
+          console.log(e);
         }
-      </style>
-    `;
-    
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-        <title>&nbsp;</title>  <!-- blank space title -->
+      }
 
-          <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-            .bill-header { text-align: center; margin-bottom: 20px; }
-            .bill-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-            .bill-info { font-size: 14px; color: #666; margin-bottom: 5px; }
-            .customer-info { margin-bottom: 20px; font-size: 14px; }
-            .customer-info p { margin: 5px 0; }
-            .bill-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .bill-table th, .bill-table td { 
-              padding: 8px; 
-              text-align: left; 
-              border-bottom: 1px solid #ddd; 
-            }
-            .bill-table th { background-color: #f5f5f5; font-weight: bold; }
-            .bill-total { 
-              font-size: 18px; 
-              font-weight: bold; 
-              text-align: right; 
-              margin-top: 20px; 
-              margin-right:20px;
-              padding-top: 10px;
-              border-top: 2px solid #333;
-            }
-            .bill-footer { text-align: center; margin-top: 30px; font-size: 14px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="print-area">
-            <div class="bill-header">
-              <div class="bill-title">${shopName}</div>
-               <div class="bill-title">${tagLine}</div>
+      // Efficiently update products in state
+      setProducts(prevProducts => 
+        prevProducts.map(product => {
+          const soldItem = finalBillItems.find(item => item.id === product.id);
+          if (soldItem) {
+            return {
+              ...product,
+              quantity: Math.max(0, product.quantity - soldItem.billQuantity)
+            };
+          }
+          return product;
+        })
+      );
+
+      // Store the final bill items for printing (including free items)
+      window.finalBillItemsForPrint = finalBillItems;
+      
+      // Show print preview
+      setShowBillPreview(true);
+    } else {
+      alert('Failed to update database. Cannot print bill.');
+    }
+  } catch (error) {
+    console.error('Error processing bill:', error);
+    alert('Error processing bill');
+  } finally {
+    setLoading(false);
+  }
+};
+
+// 2. Modified handlePrint function
+const handlePrint = () => {
+  // Use the stored final bill items for printing
+  const finalBillItems = window.finalBillItemsForPrint || billItems;
+  
+  // Calculate totals for print
+  const printTotalPrice = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
+  let printFinalPrice = printTotalPrice;
+  
+  if (appliedOffer) {
+    // @ts-ignore
+    if (appliedOffer.type === "money") {
+      // @ts-ignore
+      printFinalPrice = printTotalPrice - (appliedOffer.fixed || 0);
+    }
+    // @ts-ignore
+    if(appliedOffer?.type =="percentage"){
+      //@ts-ignore
+      let temp =( printTotalPrice * appliedOffer.percentage)/100;
+      printFinalPrice = printTotalPrice - temp;
+    }
+  }
+  
+  // Add print styles to head
+  const printStyles = `
+    <style>
+      @media print {
+        * { visibility: hidden; }
+        .print-area, .print-area * { visibility: visible; }
+        .print-area { 
+          position: absolute; 
+          left: 0; 
+          top: 0; 
+          width: 100%; 
+          background: white;
+          padding: 20px;
+        }
+        body { margin: 0; }
+        .no-print { display: none !important; }
+      }
+    </style>
+  `;
+  
+  // Create a new window for printing
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+      <title>&nbsp;</title>  <!-- blank space title -->
+
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          .bill-header { text-align: center; margin-bottom: 20px; }
+          .bill-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+          .bill-info { font-size: 14px; color: #666; margin-bottom: 5px; }
+          .customer-info { margin-bottom: 20px; font-size: 14px; }
+          .customer-info p { margin: 5px 0; }
+          .bill-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .bill-table th, .bill-table td { 
+            padding: 8px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+          }
+          .bill-table th { background-color: #f5f5f5; font-weight: bold; }
+          .free-item { color: #28a745; font-style: italic; }
+          .bill-total { 
+            font-size: 18px; 
+            font-weight: bold; 
+            text-align: right; 
+            margin-top: 20px; 
+            margin-right:20px;
+            padding-top: 10px;
+            border-top: 2px solid #333;
+          }
+          .bill-footer { text-align: center; margin-top: 30px; font-size: 14px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="print-area">
+          <div class="bill-header">
+            <div class="bill-title">${shopName}</div>
+             <div class="bill-title">${tagLine}</div>
+          </div>
+          
+          ${customerInfo.name || customerInfo.phone || customerInfo.address ? `
+            <div class="customer-info">
+              <h3 style="margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Customer Information</h3>
+              ${customerInfo.name ? `<p><strong>Name:</strong> ${customerInfo.name}</p>` : ''}
+              ${customerInfo.phone ? `<p><strong>Phone:</strong> ${customerInfo.phone}</p>` : ''}
+              ${customerInfo.address ? `<p><strong>Address:</strong> ${customerInfo.address}</p>` : ''}
             </div>
-            
-            ${customerInfo.name || customerInfo.phone || customerInfo.address ? `
-              <div class="customer-info">
-                <h3 style="margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Customer Information</h3>
-                ${customerInfo.name ? `<p><strong>Name:</strong> ${customerInfo.name}</p>` : ''}
-                ${customerInfo.phone ? `<p><strong>Phone:</strong> ${customerInfo.phone}</p>` : ''}
-                ${customerInfo.address ? `<p><strong>Address:</strong> ${customerInfo.address}</p>` : ''}
-              </div>
-            ` : ''}
-            
-            <table class="bill-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Total</th>
+          ` : ''}
+          
+          <table class="bill-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${finalBillItems.map(item => `
+                <tr ${item.isFreeItem ? 'class="free-item"' : ''}>
+                  <td>${item.name}${item.isFreeItem ? ' (FREE)' : ''}</td>
+                  <td>${item.billQuantity}</td>
+                  <td>₹${item.isFreeItem ? '0' : item.price}</td>
+                  <td>₹${item.isFreeItem ? '0' : (item.price * item.billQuantity)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                ${billItems.map(item => `
-                  <tr>
-                    <td>${item.name}</td>
-                    <td>${item.billQuantity}</td>
-                    <td>₹${item.price}</td>
-                    <td>₹${item.price * item.billQuantity}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-          <div class="bill-total">
-  TOTAL: ₹${totalPrice}
-  ${finalPrice !== totalPrice ? `<div class="text-lg font-semibold">Final: ₹${finalPrice}</div>` : ''}
+              `).join('')}
+            </tbody>
+          </table>
+          
+        <div class="bill-total">
+TOTAL: ₹${printTotalPrice}
+${printFinalPrice !== printTotalPrice ? `<div class="text-lg font-semibold">Final: ₹${printFinalPrice}</div>` : ''}
 </div>
 
-            
-            <div class="bill-footer">
-              <p>Thank you for your business!</p>
-            </div>
+          
+          <div class="bill-footer">
+            <p>Thank you for your business!</p>
           </div>
-        </body>
-      </html>
-    `);
+        </div>
+      </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  printWindow.focus();
+  
+  // Wait for content to load then print
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
     
-    printWindow.document.close();
-    printWindow.focus();
+    // Clear bill and reset all states after successful print
+    setBillItems([]);
+    clearCustomerInfo();
+    setOffer([]);
+    setenoughCoins(0);
+    setMessage("");
+    updatedCoin.current = null;
+    setApplied(undefined);
+    setShowBillPreview(false);
     
-    // Wait for content to load then print
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-      
-      // Clear bill and refresh products after successful print
-      fetchProducts(shopId);
-      setBillItems([]);
-      clearCustomerInfo();
-      setShowBillPreview(false);
-    }, 500);
-  };
-
+    // Clean up the stored print data
+    delete window.finalBillItemsForPrint;
+  }, 500);
+};
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Shop Billing System</h1>
@@ -793,9 +962,14 @@ async function updateDatabase() {
   );
 };
 
-// Printable Bill Component
-const PrintableBill = ({ billItems, finalPrice ,shopName, tagLine, totalPrice, customerInfo }) => {
+const PrintableBill = ({ billItems, finalPrice, shopName, tagLine, totalPrice, customerInfo }) => {
   const hasCustomerInfo = customerInfo.name || customerInfo.phone || customerInfo.address;
+  
+  // Use stored final bill items if available, otherwise use current billItems
+  const itemsToDisplay = window.finalBillItemsForPrint || billItems;
+  
+  // Calculate display totals (excluding free items from total)
+  const displayTotal = billItems.reduce((total, item) => total + (item.price * item.billQuantity), 0);
   
   return (
     <div className="bg-white">
@@ -829,21 +1003,24 @@ const PrintableBill = ({ billItems, finalPrice ,shopName, tagLine, totalPrice, c
           <span className="text-center">Total</span>
         </div>
         
-        {billItems.map((item, index) => (
-          <div key={index} className="grid grid-cols-4 gap-4 p-3 border-b border-gray-200">
-            <span className="font-medium">{item.name}</span>
+        {itemsToDisplay.map((item, index) => (
+          <div key={index} className={`grid grid-cols-4 gap-4 p-3 border-b border-gray-200 ${item.isFreeItem ? 'bg-green-50 text-green-700' : ''}`}>
+            <span className="font-medium">
+              {item.name}
+              {item.isFreeItem && <span className="text-xs ml-1 font-normal">(FREE)</span>}
+            </span>
             <span className="text-center">{item.billQuantity}</span>
-            <span className="text-center">₹{item.price}</span>
-            <span className="text-center">₹{item.price * item.billQuantity}</span>
+            <span className="text-center">₹{item.isFreeItem ? '0' : item.price}</span>
+            <span className="text-center">₹{item.isFreeItem ? '0' : (item.price * item.billQuantity)}</span>
           </div>
         ))}
       </div>
       
       <div className="flex justify-end mt-4 p-3 border-t-2 border-gray-800">
-        <span className="text-lg font-semibold">TOTAL: ₹{totalPrice}</span>
-         {finalPrice !== totalPrice && (
-                      <span className="text-xl pl-3 font-bold">Final: ₹{ finalPrice}</span>
-                    )}
+        <span className="text-lg font-semibold">TOTAL: ₹{displayTotal}</span>
+         {finalPrice !== displayTotal && (
+           <span className="text-xl pl-3 font-bold">Final: ₹{finalPrice}</span>
+         )}
       </div>
       
       <div className="text-center mt-6 text-gray-600">
