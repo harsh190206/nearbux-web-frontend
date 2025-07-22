@@ -1032,3 +1032,4 @@ const PrintableBill = ({ billItems, finalPrice, shopName, tagLine, totalPrice, c
 };
 
 export default BillingComponent;
+//chan
