@@ -1,11 +1,13 @@
 import  { useState, useEffect } from 'react';
 import { Search, Plus, Minus, ShoppingCart, Printer, Database, X, Package, User, UserPlus } from 'lucide-react';
 import { BACKEND_URL } from "../../config/constant";
+import { useRef } from 'react';
 import axios from 'axios';
 
 import { useNavigate } from 'react-router';
 const BillingComponent = () => {
   const navigate = useNavigate();
+  const  updatedCoin = useRef(null);
   const [products, setProducts] = useState([]);
   const [billItems, setBillItems] = useState([]);
   const [offer  , setOffer]  = useState([]);
@@ -17,6 +19,7 @@ const BillingComponent = () => {
   const [shopName , setshopName] = useState("shop");
   const [tagLine , setTagline] = useState("");
   const[message , setMessage] = useState("");
+  const[enoughCoins, setenoughCoins] = useState(0);
   const [appliedOffer , setApplied] = useState(); // stores the final offer to be applied 
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -251,47 +254,118 @@ if (appliedOffer) {
     finalPrice = totalPrice - temp;
 
   }
-}
-  // Update database (reduce product quantities)
-  const updateDatabase = async () => {
-    // Validate mandatory fields
-    if (!customerInfo.name.trim() || !customerInfo.phone.trim() || customerInfo.phone.length !=10) {
-      alert('Please fill in customer name and phone number');
-      return;
-    }
+// if we have to remove huhu
+  //@ts-ignore   
 
-    setLoading(true);
+  //@ts-ignore
+if(appliedOffer.type =="product" && customerInfo.phone.length == 10){
+  async function checkCoin (){
     try {
-      const response = await fetch(`${BACKEND_URL}/shop/${shopId}/update-inventory`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: billItems.map(item => ({
-            productId: item.id,
-            quantity: item.billQuantity
-          })),
-          ownerId: ownerId
-        }),
-      });
+    const response =  await axios.get(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`);
+    const par = response.data.message;
+    //@ts-ignore
+    if(par>appliedOffer.coinValue){
+      setenoughCoins(1);
+      //@ts-ignore
+      const updatedCoins = par - appliedOffer.coinValue
+      updatedCoin.current = updatedCoins;
 
-      if (response.ok) {
-        alert('Database updated successfully!');
-        // Refresh products
-        fetchProducts(shopId);
-        setBillItems([]);
-        clearCustomerInfo();
-      } else {
-        alert('Failed to update database');
-      }
-    } catch (error) {
-      console.error('Error updating database:', error);
-      alert('Error updating database');
-    } finally {
-      setLoading(false);
+//@ts-ignore
+    
+
+
     }
-  };
+    
+  }catch(e){
+    console.error(e);
+  }
+
+  }
+  checkCoin();
+  
+
+}
+
+}
+
+async function updateDatabase() {
+  let updatedBillItems = [...billItems]; // Work with a copy
+
+  // Apply offer if conditions are met
+  //@ts-ignore
+  if (enoughCoins === 1 && appliedOffer?.type === "product" && appliedOffer.products) {
+    //@ts-ignore
+
+    const productId = appliedOffer.products.id;
+    const existingItemIndex = updatedBillItems.findIndex(item => item.id === productId);
+    
+    if (existingItemIndex !== -1) {
+      // Increase quantity by 1 for existing item
+      updatedBillItems[existingItemIndex] = {
+        ...updatedBillItems[existingItemIndex],
+        billQuantity: updatedBillItems[existingItemIndex].billQuantity + 1
+      };
+    } else {
+      // Add new product with quantity 1
+      updatedBillItems.push({
+        //@ts-ignore
+        ...appliedOffer.products,
+        billQuantity: 1,
+             //@ts-ignore
+        price: appliedOffer.products.price,
+             //@ts-ignore
+        id: appliedOffer.products.id,
+             //@ts-ignore
+        name: appliedOffer.products.name
+      });
+    }
+    
+    // Update the state with the new items
+    setBillItems(updatedBillItems);
+  }
+
+  setLoading(true);
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/shop/${shopId}/update-inventory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: updatedBillItems.map(item => ({
+          productId: item.id,
+          quantity: item.billQuantity // Use the updated bill items
+        })),
+        ownerId: ownerId
+      }),
+    });
+
+    if (response.ok) {
+      try {
+        console.log(updatedCoin);
+        console.log("current" + updatedCoin.current); 
+        const resp = await axios.post(`${BACKEND_URL}/shop/updatecoinss`,{phone : customerInfo.phone,updatedCoin : updatedCoin.current });
+      console.log(resp);
+ 
+      }catch(e){
+        console.log(e);
+      }
+
+      alert('Database updated successfully!');
+      fetchProducts(shopId);
+      setBillItems([]);
+      clearCustomerInfo();
+    } else {
+      alert('Failed to update database');
+    }
+  } catch (error) {
+    console.error('Error updating database:', error);
+    alert('Error updating database');
+  } finally {
+    setLoading(false);
+  }
+}
 
   // Print bill (with database update)
   const printBill = async () => {
