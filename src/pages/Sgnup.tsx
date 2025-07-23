@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router";
+import { BACKEND_URL } from '../config/constant';
 import axios from 'axios';
 import { 
   initializeApp 
@@ -158,7 +159,7 @@ const SignupPage = () => {
     }
   
     try {
-      const res = await axios.post('http://localhost:3000/user/validate', {
+      const res = await axios.post(`${BACKEND_URL}/user/validate`, {
         username,
         phoneNumber: formatPhoneNumber(phoneNumber)
       });
@@ -247,7 +248,7 @@ const SignupPage = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:3000/user/signup',
+        `${BACKEND_URL}/user/signup`,
         payload,
         {
           headers: {
@@ -258,6 +259,9 @@ const SignupPage = () => {
 
       if (response.status === 200) {
         localStorage.setItem("phone", formatPhoneNumber(phoneNumber));
+        localStorage.setItem("userId" , response.data.id);
+        console.log(localStorage.getItem("userId"));
+
         setSuccess(true);
         
         // Better way to handle navigation

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from '../config/constant';
 
 export function Signin() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export function Signin() {
         userInput = '+91' + userInput;
       }
 
-      const response = await axios.post("http://localhost:3000/user/signin", { userInput, password });
+      const response = await axios.post(`${BACKEND_URL}/user/signin`, { userInput, password });
       if (response.status === 500) {
         throw new Error(response.data.message);
       }

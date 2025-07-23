@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ChevronLeft from "../components/chevronleft";
 import ChevronRight from "../components/chevronright";
 import axios from "axios";
+import { BACKEND_URL } from "../config/constant";
 
 export default function Cust() {
   const [select, useSelect] = useState("shops");
@@ -9,7 +10,7 @@ export default function Cust() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await axios.post("http://localhost:3000/images");
+        const res = await axios.post(`${BACKEND_URL}/images`);
         console.log(res.data);
       } catch (err) {
         console.error(err);

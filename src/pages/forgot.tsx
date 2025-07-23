@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { BACKEND_URL } from '../config/constant';
 import {
   initializeApp
 } from 'firebase/app';
@@ -209,7 +210,7 @@ const Forgotpass = () => {
 
       // Call backend API to update password
       const response = await axios.post(
-        'http://localhost:3000/user/updatepass',
+        `${BACKEND_URL}/user/updatepass`,
         {
           phoneNumber: formatPhoneNumber(phoneNumber),
           newPassword: newPassword

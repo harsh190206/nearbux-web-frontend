@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router";
+import { BACKEND_URL } from '../config/constant';
 // @ts-ignore
 export default  function Info() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default  function Info() {
     const phoneNumber = localStorage.getItem("phone");
     let response ;
     try {
-     response =  await  axios.post("http://localhost:3000/user/info", {pinCode , area , phoneNumber});
+     response =  await  axios.post(`${BACKEND_URL}/user/info`, {pinCode , area , phoneNumber});
    
     }catch(errr : any ){
       setloading(false);
