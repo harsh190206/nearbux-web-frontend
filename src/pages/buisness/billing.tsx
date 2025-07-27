@@ -37,7 +37,9 @@ useEffect(() => {
     //@ts-ignore
     if (appliedOffer?.type === "product" && customerInfo.phone.length === 10) {
       try {
-        const response = await axios.get(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`);
+        console.log("shopId")
+      //  const response = await axios.post(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`,{shopId});
+      const response = await axios.post(`${BACKEND_URL}/shop/${customerInfo.phone}/coins`,{shopId: shopId});
         const par = response.data.message;
         //@ts-ignore
         if (par > appliedOffer.coinValue) {
@@ -401,10 +403,10 @@ async function updateDatabase() {
       // Only update coins if there's a valid phone and coin value
       if (customerInfo.phone.length === 10 && updatedCoin.current !== null) {
         try {
-          const resp = await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
-            phone: customerInfo.phone,
-            updatedCoin: updatedCoin.current
-          });
+        const resp = await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
+  phone: customerInfo.phone,
+  updatedCoin: updatedCoin.current
+});
           console.log(resp);
         } catch (e) {
           console.log(e);
@@ -412,6 +414,31 @@ async function updateDatabase() {
       }
 
       alert('Database updated successfully!');
+      // Add coins to user based on purchase amount
+if (customerInfo.phone.length === 10 && finalPrice > 0) {
+  try {
+    await axios.post(`${BACKEND_URL}/shop/addcoins`, {
+      phone: customerInfo.phone,
+      totalAmount: finalPrice,
+      shopId: shopId
+    });
+  } catch (e) {
+    console.log("Error adding coins:", e);
+  }
+}
+
+// Add coins to user based on purchase amount
+if (customerInfo.phone.length === 10 && finalPrice > 0) {
+  try {
+    await axios.post(`${BACKEND_URL}/shop/addcoins`, {
+      phone: customerInfo.phone,
+      totalAmount: printFinalPrice,
+      shopId: shopId
+    });
+  } catch (e) {
+    console.log("Error adding coins:", e);
+  }
+}
       
       // Efficiently update products in state by deducting sold quantities
       setProducts(prevProducts => 
@@ -512,10 +539,11 @@ const printBill = async () => {
       // Update coins if applicable
       if (customerInfo.phone.length === 10 && updatedCoin.current !== null) {
         try {
-          await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
-            phone: customerInfo.phone,
-            updatedCoin: updatedCoin.current
-          });
+         await axios.post(`${BACKEND_URL}/shop/updatecoinss`, {
+  phone: customerInfo.phone,
+  updatedCoin: updatedCoin.current,
+  shopId: shopId
+});
         } catch (e) {
           console.log(e);
         }

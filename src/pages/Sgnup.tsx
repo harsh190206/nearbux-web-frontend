@@ -259,8 +259,8 @@ const SignupPage = () => {
 
       if (response.status === 200) {
         localStorage.setItem("phone", formatPhoneNumber(phoneNumber));
-        localStorage.setItem("userId" , response.data.id);
-        console.log(localStorage.getItem("userId"));
+     
+      
 
         setSuccess(true);
         

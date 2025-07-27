@@ -55,8 +55,13 @@ export function Signin() {
       
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
+         localStorage.setItem("userId", response.data.id);
+        console.log("response data ");
+        console.log(response.data);
+
       
-        console.log(response.data.shopId);
+       
+        console.log(  "response.data.id"+ response.data.id);
 
         navigate('/home');
       }

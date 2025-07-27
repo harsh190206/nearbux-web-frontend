@@ -3,6 +3,7 @@ import { Search ,Edit2, Trash2, Plus, Upload, Save, X, Package } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from "../../config/constant";
 
+
 // UploadComponent from your existing code
 function UploadComponent({ 
   skipUrl, 
@@ -17,6 +18,7 @@ function UploadComponent({
   const [uploadComplete, setUploadComplete] = useState(false);
   const [error, setError] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(null);
+
 
   // Handle redirect countdown after successful upload
   useEffect(() => {
@@ -46,6 +48,7 @@ function UploadComponent({
     };
   }, [uploadComplete, error, skipUrl, successRedirectDelay]);
 
+
   const handleChange = (e) => {
     if (e.target.files) {
       setFile(e.target.files[0]);
@@ -53,14 +56,17 @@ function UploadComponent({
     }
   };
 
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
   };
 
+
   const handleDragLeave = () => {
     setIsDragging(false);
   };
+
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -71,6 +77,7 @@ function UploadComponent({
       setFile(e.dataTransfer.files[0]);
     }
   };
+
 
   const handleUpload = async () => {
     if (!file) return;
@@ -113,6 +120,7 @@ function UploadComponent({
     }
   };
 
+
   const handleSkip = () => {
     if(skipUrl){
       window.location.href = skipUrl;
@@ -124,6 +132,7 @@ function UploadComponent({
     setFile(null);
   };
    
+
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto my-8">
@@ -292,6 +301,7 @@ function UploadComponent({
   );
 }
 
+
 export default function InventoryPage() {
   const navigate = (path) => {
     window.location.href = path;
@@ -323,10 +333,12 @@ export default function InventoryPage() {
     </div>
   }
 
+
   // Fetch products on component mount
   useEffect(() => {
     fetchProducts();
   }, []);
+
 
   const fetchProducts = async () => {
     try {
@@ -348,10 +360,12 @@ export default function InventoryPage() {
     }
   };
 
+
   const handleEdit = (product) => {
     setEditingProduct(product.id);
     setEditForm({ price: product.price.toString(), quantity: product.quantity.toString() });
   };
+
 
   const handleSaveEdit = async (productId) => {
     try {
@@ -363,6 +377,7 @@ export default function InventoryPage() {
           quantity: parseInt(editForm.quantity)
         })
       });
+
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -422,6 +437,7 @@ export default function InventoryPage() {
       return;
     }
 
+
     try {
       const response = await fetch(`${BACKEND_URL}/shop/products`, {
         method: 'POST',
@@ -433,6 +449,7 @@ export default function InventoryPage() {
           shopId: shopId
         })
       });
+
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -452,16 +469,19 @@ export default function InventoryPage() {
     }
   };
 
+
   // Bulk add functions
   const addBulkProductRow = () => {
     setBulkProducts([...bulkProducts, { name: '', price: '', quantity: '' }]);
   };
+
 
   const removeBulkProductRow = (index) => {
     if (bulkProducts.length > 1) {
       setBulkProducts(bulkProducts.filter((_, i) => i !== index));
     }
   };
+
 
   const updateBulkProduct = (index, field, value) => {
     const updated = bulkProducts.map((product, i) => 
@@ -470,22 +490,26 @@ export default function InventoryPage() {
     setBulkProducts(updated);
   };
 
+
   const handleBulkAddProducts = async () => {
     // Validate all products
     const validProducts = bulkProducts.filter(product => 
       product.name.trim() && product.price && product.quantity
     );
 
+
     if (validProducts.length === 0) {
       alert('Please fill at least one complete product');
       return;
     }
+
 
     if (validProducts.length !== bulkProducts.length) {
       if (!confirm('Some products have missing fields and will be skipped. Continue?')) {
         return;
       }
     }
+
 
     setBulkLoading(true);
     try {
@@ -496,11 +520,13 @@ export default function InventoryPage() {
         shopId: shopId
       }));
 
+
       const response = await fetch(`${BACKEND_URL}/shop/products/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: productsToAdd })
       });
+
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -537,6 +563,7 @@ export default function InventoryPage() {
     );
   };
 
+
   if (showUploadComponent) {
     return (
       <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -565,6 +592,7 @@ export default function InventoryPage() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -595,11 +623,13 @@ export default function InventoryPage() {
           </div>
         </div>
 
+
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
             <p className="text-red-700 text-sm sm:text-base">{error}</p>
           </div>
         )}
+
 
         {/* Add Product Form */}
         {showAddForm && (
@@ -636,6 +666,7 @@ export default function InventoryPage() {
                   onChange={(e) => setAddForm({ ...addForm, price: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter price"
+                  onWheel={e => e.target.blur()}
                 />
               </div>
               <div>
@@ -646,6 +677,7 @@ export default function InventoryPage() {
                   onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter quantity"
+                  onWheel={e => e.target.blur()}
                 />
               </div>
             </div>
@@ -661,6 +693,7 @@ export default function InventoryPage() {
             </div>
           </div>
         )}
+
 
         {/* Bulk Add Products Form */}
         {showBulkAddForm && (
@@ -700,6 +733,7 @@ export default function InventoryPage() {
                         onChange={(e) => updateBulkProduct(index, 'price', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="Enter price"
+                        onWheel={e => e.target.blur()}
                       />
                     </div>
                     <div>
@@ -710,6 +744,7 @@ export default function InventoryPage() {
                         onChange={(e) => updateBulkProduct(index, 'quantity', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder="Enter quantity"
+                        onWheel={e => e.target.blur()}
                       />
                     </div>
                     <div className="flex items-end">
@@ -751,6 +786,7 @@ export default function InventoryPage() {
           </div>
         )}
 
+
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {products.map((product) => (
@@ -762,6 +798,7 @@ export default function InventoryPage() {
                     src={product.image} 
                     alt={product.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="text-center p-4">
@@ -777,6 +814,7 @@ export default function InventoryPage() {
                 )}
               </div>
 
+
               {/* Product Details */}
               <div className="p-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 truncate">{product.name}</h3>
@@ -790,6 +828,7 @@ export default function InventoryPage() {
                         value={editForm.price}
                         onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        onWheel={e => e.target.blur()}
                       />
                     </div>
                     <div>
@@ -799,6 +838,7 @@ export default function InventoryPage() {
                         value={editForm.quantity}
                         onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        onWheel={e => e.target.blur()}
                       />
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -856,6 +896,7 @@ export default function InventoryPage() {
             </div>
           ))}
         </div>
+
 
         {products.length === 0 && !loading && (
           <div className="text-center py-12 px-4">

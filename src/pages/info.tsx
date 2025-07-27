@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router";
 import { BACKEND_URL } from '../config/constant';
+import { useSetRecoilState } from 'recoil';
+import { pincodeState } from './atoms';
+import { localArea } from './atoms';
 // @ts-ignore
 export default  function Info() {
   const navigate = useNavigate();
   const [area, setArea] = useState('');
+   const setPincode = useSetRecoilState(pincodeState);
+const setLocalArea = useSetRecoilState(localArea);
+
   const [pinCode, setPinCode] = useState('');
   const [error, setError] = useState('');
   const [loading , setloading] = useState<boolean>(false);
@@ -39,6 +45,10 @@ export default  function Info() {
 
      if(response?.status ===200){
      navigate("/signin");
+       localStorage.setItem("pin" , pinCode);
+       localStorage.setItem("area" , area);
+
+
      setloading(false);
    
 

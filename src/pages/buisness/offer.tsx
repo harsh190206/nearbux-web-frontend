@@ -380,14 +380,14 @@ const OfferManagement = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Offer Management</h1>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Offer Management</h1>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
             >
               <Plus className="w-4 h-4" />
               Create Offer
@@ -396,17 +396,17 @@ const OfferManagement = () => {
 
           {/* Create/Edit Form */}
           {showCreateForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto my-4 sm:my-0">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold">
+                  <h2 className="text-lg sm:text-xl font-semibold">
                     {editingOffer ? 'Edit Offer' : 'Create New Offer'}
                   </h2>
                   <button
                     onClick={closeForm}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-gray-700 p-1"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                 </div>
 
@@ -419,7 +419,7 @@ const OfferManagement = () => {
                       name="type"
                       value={formData.type}
                       onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full p-2.5 sm:p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       required
                     >
                       <option value="product">Product Offer</option>
@@ -437,7 +437,7 @@ const OfferManagement = () => {
                       name="title"
                       value={formData.title}
                       onChange={handleInputChange}
-                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                         errors.title ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Weekend Special - 15% Off Fresh Pastries"
@@ -456,7 +456,7 @@ const OfferManagement = () => {
                       value={formData.description}
                       onChange={handleInputChange}
                       rows={3}
-                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base resize-none ${
                         errors.description ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enjoy 15% off all fresh pastries this weekend only! Valid Friday through Sunday."
@@ -475,7 +475,8 @@ const OfferManagement = () => {
                       name="minimum_amount"
                       value={formData.minimum_amount}
                       onChange={handleInputChange}
-                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      onWheel={(e) => e.target.blur()}
+                      className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                         errors.minimum_amount ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="300"
@@ -497,7 +498,7 @@ const OfferManagement = () => {
                           name="product"
                           value={formData.product}
                           onChange={handleInputChange}
-                          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                             errors.product ? 'border-red-500' : 'border-gray-300'
                           }`}
                           required
@@ -521,7 +522,8 @@ const OfferManagement = () => {
                           name="coinValue"
                           value={formData.coinValue}
                           onChange={handleInputChange}
-                          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          onWheel={(e) => e.target.blur()}
+                          className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                             errors.coinValue ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="0"
@@ -547,7 +549,8 @@ const OfferManagement = () => {
                         name="percentage"
                         value={formData.percentage}
                         onChange={handleInputChange}
-                        className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        onWheel={(e) => e.target.blur()}
+                        className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                           errors.percentage ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="15"
@@ -569,7 +572,8 @@ const OfferManagement = () => {
                         name="fixed"
                         value={formData.fixed}
                         onChange={handleInputChange}
-                        className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        onWheel={(e) => e.target.blur()}
+                        className={`w-full p-2.5 sm:p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
                           errors.fixed ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="100"
@@ -582,18 +586,18 @@ const OfferManagement = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       type="submit"
                       disabled={loading || Object.keys(errors).length > 0}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                     >
                       {loading ? 'Saving...' : editingOffer ? 'Update Offer' : 'Create Offer'}
                     </button>
                     <button
                       type="button"
                       onClick={closeForm}
-                      className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors"
+                      className="flex-1 bg-gray-300 text-gray-700 py-2.5 px-4 rounded-md hover:bg-gray-400 transition-colors text-sm sm:text-base"
                     >
                       Cancel
                     </button>
@@ -610,7 +614,7 @@ const OfferManagement = () => {
             {offers.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Gift className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No offers created yet. Create your first offer to attract customers!</p>
+                <p className="text-sm sm:text-base px-4">No offers created yet. Create your first offer to attract customers!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -622,31 +626,31 @@ const OfferManagement = () => {
                       key={offer.id}
                       className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg ${getOfferTypeColor(offer.type)}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className={`p-2 rounded-lg ${getOfferTypeColor(offer.type)} flex-shrink-0`}>
                             {getOfferIcon(offer.type)}
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">
                               {offer.title}
                             </h3>
-                            <p className="text-gray-600 text-sm mb-2">
+                            <p className="text-gray-600 text-xs sm:text-sm mb-2 break-words">
                               {offer.description}
                             </p>
                             
                             {/* Product Details for Product Offers */}
                             {offer.type === 'product' && productDetails && (
-                              <div className="flex items-center gap-3 mb-2 p-2 bg-gray-50 rounded-md">
+                              <div className="flex items-center gap-2 sm:gap-3 mb-2 p-2 bg-gray-50 rounded-md">
                                 {productDetails.image && (
                                   <img 
                                     src={productDetails.image} 
                                     alt={productDetails.name}
-                                    className="w-10 h-10 object-cover rounded-md"
+                                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-md flex-shrink-0"
                                   />
                                 )}
-                                <div>
-                                  <p className="font-medium text-sm text-gray-900">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-xs sm:text-sm text-gray-900 truncate">
                                     {productDetails.name}
                                   </p>
                                   <p className="text-xs text-gray-500">
@@ -656,27 +660,27 @@ const OfferManagement = () => {
                               </div>
                             )}
                             
-                            <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
+                            <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 flex-wrap">
                               {offer.minimum_amount && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <DollarSign className="w-3 h-3" />
                                   Min: ₹{offer.minimum_amount}
                                 </span>
                               )}
                               {offer.percentage && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <Percent className="w-3 h-3" />
                                   {offer.percentage}% off
                                 </span>
                               )}
                               {offer.fixed && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <DollarSign className="w-3 h-3" />
                                   ₹{offer.fixed} off
                                 </span>
                               )}
                               {offer.coinValue !== null && offer.coinValue !== undefined && (
-                                <span className="flex items-center gap-1 text-orange-600">
+                                <span className="flex items-center gap-1 text-orange-600 whitespace-nowrap">
                                   <Coins className="w-3 h-3" />
                                   {offer.coinValue} coins
                                 </span>
@@ -684,7 +688,7 @@ const OfferManagement = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:gap-2 justify-end sm:justify-start flex-shrink-0">
                           <button
                             onClick={() => handleEdit(offer)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"

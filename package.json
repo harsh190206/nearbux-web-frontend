@@ -3,14 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-"scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "lint": "eslint .",
-  "preview": "vite preview",
-  "type-check": "tsc -b"
-},
-
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "type-check": "tsc -b"
+  },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "axios": "^1.9.0",
@@ -23,6 +22,7 @@
     "react-router": "^7.5.3",
     "react-router-dom": "^7.5.3",
     "recharts": "^2.15.3",
+    "recoil": "^0.7.7",
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {
